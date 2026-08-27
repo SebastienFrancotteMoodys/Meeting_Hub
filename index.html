@@ -236,6 +236,26 @@
     cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:2px}
   .carry-go:hover{color:var(--accent);text-decoration-color:var(--accent)}
 
+  /* screenshots */
+  .nc-imgs{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+  .nc-img{width:104px;height:74px;object-fit:cover;border:1px solid var(--line);border-radius:8px;
+    cursor:zoom-in;background:var(--line-2);box-shadow:var(--shadow)}
+  .nc-img-missing{opacity:.35}
+  .imgdrop{margin-top:2px;border:1px dashed var(--line);border-radius:8px;padding:10px;
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#FCFDFE}
+  .imgdrop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .imgthumb{position:relative;width:84px;height:60px}
+  .imgthumb img{width:84px;height:60px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:var(--line-2)}
+  .imgthumb .rm{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer;
+    font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:var(--shadow)}
+  .imgthumb .rm:hover{background:var(--red-bg);color:var(--red);border-color:#E7BDB6}
+  .imghint{font-size:12px;color:var(--ink-3)}
+  .imgov{display:none;position:fixed;inset:0;background:rgba(10,12,16,.82);z-index:90;
+    align-items:center;justify-content:center;padding:4vh 4vw;cursor:zoom-out}
+  .imgov.open{display:flex}
+  .imgov img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+
   /* ---------- modal ---------- */
   .ov{display:none;position:fixed;inset:0;background:rgba(20,24,32,.34);backdrop-filter:blur(2px);z-index:60;
     align-items:flex-start;justify-content:center;padding:7vh 16px;overflow:auto}
@@ -405,11 +425,20 @@
       <textarea id="nBullets" style="min-height:200px" placeholder="One idea per line"></textarea>
       <span class="hint">One line = one bullet. Indent with 2 spaces for a sub-point.
         End a line with <code>:</code> to make it a heading.</span></div>
+    <div class="f"><label>Screenshots</label>
+      <div class="imgdrop" id="imgDrop">
+        <div id="imgThumbs" style="display:contents"></div>
+        <span class="imghint">Paste (Ctrl+V), drop an image, or</span>
+        <button type="button" class="btn tiny" id="imgAdd">＋ Image</button>
+        <input type="file" id="imgFile" accept="image/*" multiple hidden>
+      </div></div>
     <div class="macts"><button class="btn primary" id="nSave">Save</button>
       <button class="btn quiet" id="nCancel">Cancel</button>
       <span class="sp"></span><button class="btn danger" id="nDelete">Delete</button></div>
   </div>
 </div>
+
+<div class="imgov" id="imgOv"><img id="imgOvImg" alt=""></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -422,6 +451,7 @@ let tab="actions", query="", activePerson="", activeSubject="", activeGroup="", 
     editing=null, editingNote=null, dragId=null, dragSubject=null, linkNoteId=null;
 let dirHandle=null, dirName="", dataHandle=null, fsSaveTimer=null, fsSaving=false, pendingHandle=null, inboxTimer=null;
 const IDB_DB="meeting-hub-fs", IDB_STORE="handles", IDB_KEY="dataDir";
+let editImages=[]; const imgURLCache=new Map();
 
 function load(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):[]}catch(e){return[]}}
 function save(){
@@ -550,6 +580,74 @@ function updateStorageUI(){
       : "Not linked — your data currently lives only in this browser.";
     note.style.color = (ok&&pendingHandle&&!dirHandle)?"var(--amber)":"var(--ink-3)";
   }
+}
+
+/* ---------- screenshots ---------- */
+function blobToDataURL(blob){return new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(blob)})}
+function downscaleImage(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1600, w=img.naturalWidth, h=img.naturalHeight, scale=Math.min(1,max/Math.max(w,h));
+      const cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+      const c=document.createElement("canvas");c.width=cw;c.height=ch;
+      c.getContext("2d").drawImage(img,0,0,cw,ch);
+      URL.revokeObjectURL(img.src);
+      c.toBlob(b=>b?res(b):rej(new Error("encode")),"image/jpeg",0.82);
+    };
+    img.onerror=()=>rej(new Error("decode"));
+    img.src=URL.createObjectURL(file);
+  });
+}
+async function saveImageBlob(blob){
+  const name=uid()+".jpg";
+  if(dirHandle){
+    try{
+      const dir=await dirHandle.getDirectoryHandle("images",{create:true});
+      const fh=await dir.getFileHandle(name,{create:true});
+      const w=await fh.createWritable();await w.write(blob);await w.close();
+      return "images/"+name;
+    }catch(e){/* fall back to embedded */}
+  }
+  return await blobToDataURL(blob);
+}
+async function resolveImg(ref){
+  if(!ref)return "";
+  if(ref.slice(0,5)==="data:")return ref;
+  if(imgURLCache.has(ref))return imgURLCache.get(ref);
+  if(!dirHandle)return "";
+  try{
+    const parts=ref.split("/");let dh=dirHandle;
+    for(let i=0;i<parts.length-1;i++)dh=await dh.getDirectoryHandle(parts[i],{create:false});
+    const f=await (await dh.getFileHandle(parts[parts.length-1],{create:false})).getFile();
+    const url=URL.createObjectURL(f);imgURLCache.set(ref,url);return url;
+  }catch(e){return ""}
+}
+async function hydrateImages(root){
+  const list=(root||document).querySelectorAll("img[data-imgref]");
+  for(const im of list){
+    const ref=im.getAttribute("data-imgref");im.removeAttribute("data-imgref");
+    const url=await resolveImg(ref);
+    if(url)im.src=url; else im.classList.add("nc-img-missing");
+  }
+}
+function openLightbox(url){const ov=document.getElementById("imgOv");document.getElementById("imgOvImg").src=url;ov.classList.add("open")}
+function renderEditImages(){
+  const box=document.getElementById("imgThumbs");if(!box)return;
+  box.innerHTML=editImages.map((ref,i)=>'<span class="imgthumb"><img '
+    +(ref.slice(0,5)==="data:"?'src="'+esc(ref)+'"':'data-imgref="'+esc(ref)+'"')
+    +'><button type="button" class="rm" data-imgrm="'+i+'" title="Remove">×</button></span>').join("");
+  box.querySelectorAll("[data-imgrm]").forEach(b=>b.onclick=()=>{editImages.splice(+b.dataset.imgrm,1);renderEditImages()});
+  hydrateImages(box);
+}
+async function addImageFromBlob(blob){
+  if(!blob)return;
+  try{const small=await downscaleImage(blob);const ref=await saveImageBlob(small);editImages.push(ref);renderEditImages()}
+  catch(e){toast("Could not add that image.")}
+}
+function onImagePaste(e){
+  const items=(e.clipboardData&&e.clipboardData.items)||[];
+  for(const it of items){if(it.type&&it.type.indexOf("image/")===0){e.preventDefault();addImageFromBlob(it.getAsFile());return}}
 }
 function toast(m){const t=document.getElementById("toast");t.innerHTML="";t.style.pointerEvents="none";
   t.appendChild(document.createTextNode(m));t.classList.add("show");
@@ -884,6 +982,7 @@ function renderNotes(){
     ul.querySelectorAll("li").forEach((li,i)=>{if(i>=5)li.classList.toggle("hid",!hidden)});
     el.textContent=hidden?"Show less":"Show all "+ul.children.length;
   });
+  hydrateImages();
 }
 
 function wireSubjectDnd(){
@@ -1006,12 +1105,16 @@ function noteCardHTML(n,isPrep){
   const acts=linkedActions(n);
   const link=acts.length?'<button class="lnk" data-to-actions="'+esc(n.meeting||"")+'">'+acts.length+" action"+(acts.length>1?"s":"")+'</button>':"";
   const badge=isPrep?'<span class="badge-prep">Prep</span>':"";
+  const imgs=Array.isArray(n.images)?n.images:[];
+  const imgHTML=imgs.length?'<div class="nc-imgs">'+imgs.map(ref=>ref.slice(0,5)==="data:"
+    ?'<img class="nc-img" src="'+esc(ref)+'" data-lightbox="'+esc(ref)+'">'
+    :'<img class="nc-img" data-imgref="'+esc(ref)+'" data-lightbox="'+esc(ref)+'">').join("")+'</div>':"";
   return '<article class="notecard'+(isPrep?" prep":"")+'">'
     +'<div class="nc-top"><div class="nc-titlewrap"><span class="nc-title">'+hl(n.meeting||"No subject")+'</span>'+badge+'</div>'
     +'<span class="sp"></span><button class="btn quiet tiny" data-edit-note="'+n.id+'">Edit</button></div>'
     +'<div class="nc-sub">'+hl(sub)+'</div>'
     +(isPrep?carryOverHTML(n):"")
-    +'<ul class="nc-list">'+lis+'</ul>'
+    +'<ul class="nc-list">'+lis+'</ul>'+imgHTML
     +((more||link)?'<div class="nc-foot">'+more+link+'</div>':"")
     +'</article>';
 }
@@ -1022,7 +1125,7 @@ function closeOv(o){o.classList.remove("open")}
 const actOv=document.getElementById("actOv"), noteOv=document.getElementById("noteOv"), pasteOv=document.getElementById("pasteOv");
 [actOv,noteOv,pasteOv].forEach(o=>o.addEventListener("click",e=>{if(e.target===o)closeOv(o)}));
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){[actOv,noteOv,pasteOv].forEach(closeOv);closeMenus()}
+  if(e.key==="Escape"){[actOv,noteOv,pasteOv].forEach(closeOv);document.getElementById("imgOv").classList.remove("open");closeMenus()}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();document.getElementById("q").focus()}
 });
 
@@ -1079,15 +1182,16 @@ function openNote(id,asPrep){
   document.getElementById("nPrep").checked=prep;
   document.getElementById("nBullets").value=editingNote?noteBullets(editingNote).join("\n"):"";
   document.getElementById("nDelete").style.display=editingNote?"":"none";
+  editImages=editingNote&&Array.isArray(editingNote.images)?editingNote.images.slice():[];renderEditImages();
   openOv(noteOv);document.getElementById("nSubject").focus();
 }
 document.getElementById("nCancel").onclick=()=>closeOv(noteOv);
 document.getElementById("nSave").onclick=()=>{
   const subject=document.getElementById("nSubject").value.trim();
   const bullets=document.getElementById("nBullets").value.split("\n").map(trimEnd).filter(Boolean);
-  if(!subject&&!bullets.length){toast("Add a subject or at least one line.");return}
+  if(!subject&&!bullets.length&&!editImages.length){toast("Add a subject, a line, or an image.");return}
   const v={meeting:subject,people:document.getElementById("nPeople").value.split(",").map(s=>s.trim()).filter(Boolean),
-    date:document.getElementById("nDate").value,bullets:bullets,
+    date:document.getElementById("nDate").value,bullets:bullets,images:editImages.slice(),
     status:document.getElementById("nPrep").checked?"prep":"held"};
   if(editingNote)Object.assign(editingNote,v); else notesState.push(Object.assign({id:uid()},v));
   save();closeOv(noteOv);setTab("notes");
@@ -1096,6 +1200,25 @@ document.getElementById("nDelete").onclick=()=>{
   if(!editingNote||!confirm("Delete this note?\n\n"+(editingNote.meeting||"Untitled")))return;
   notesState=notesState.filter(x=>x.id!==editingNote.id);save();closeOv(noteOv);renderAll();
 };
+
+/* screenshots: add via button / file / drag-drop / paste; view via lightbox */
+document.getElementById("imgAdd").onclick=()=>document.getElementById("imgFile").click();
+document.getElementById("imgFile").onchange=e=>{[...e.target.files].forEach(f=>{if(f.type.indexOf("image/")===0)addImageFromBlob(f)});e.target.value=""};
+(function(){const dz=document.getElementById("imgDrop");
+  dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("over")});
+  dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
+  dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("over");
+    [...(e.dataTransfer.files||[])].forEach(f=>{if(f.type.indexOf("image/")===0)addImageFromBlob(f)})});
+  dz.addEventListener("paste",onImagePaste);
+})();
+document.getElementById("nBullets").addEventListener("paste",onImagePaste);
+document.getElementById("imgOv").onclick=()=>document.getElementById("imgOv").classList.remove("open");
+document.addEventListener("click",async e=>{
+  const im=e.target.closest("img.nc-img");if(!im)return;
+  const ref=im.getAttribute("data-lightbox");
+  const url=ref&&ref.slice(0,5)==="data:"?ref:await resolveImg(ref);
+  if(url)openLightbox(url);
+});
 
 /* ---------- notes editor: indentation ---------- */
 const nb=document.getElementById("nBullets");
