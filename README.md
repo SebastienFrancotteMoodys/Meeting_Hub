@@ -1,2 +1,2 @@
 # Meeting_Hub
-Kanban ntes tool with minutes of meeting 
+Kanban notes tool with minutes of meeting 
