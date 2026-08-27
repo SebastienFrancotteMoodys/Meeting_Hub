@@ -141,3 +141,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Meeting Hub data backups — never commit real meeting data
+meeting-hub-*.json
