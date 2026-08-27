@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meeting Hub</title>
+<style>
+  :root{
+    --bg:#F5F6F8; --surface:#FFFFFF; --ink:#1A1D23; --ink-2:#5C6470; --ink-3:#8A93A0;
+    --line:#E4E7EC; --line-2:#EFF1F4;
+    --accent:#2F4A6D; --accent-soft:#EDF2F8;
+    --amber:#9A5B06; --amber-bg:#FDF6E7; --amber-line:#E8CFA0;
+    --red:#A32617; --red-bg:#FCF0EE;
+    --r:10px; --r-sm:6px;
+    --shadow:0 1px 2px rgba(26,29,35,.05), 0 1px 1px rgba(26,29,35,.03);
+    --shadow-lift:0 4px 14px rgba(26,29,35,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",ui-sans-serif,system-ui,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 26px 80px}
+  button,input,textarea,select{font:inherit;color:inherit}
+  .sp{flex:1}
+
+  /* ---------- top ---------- */
+  .top{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .brand{font-size:16px;font-weight:640;letter-spacing:-.015em;white-space:nowrap}
+  .segment{display:inline-flex;background:#E9EBEF;border-radius:9px;padding:2px}
+  .seg{border:0;background:transparent;padding:5px 15px;border-radius:7px;font-size:13.5px;font-weight:550;
+    color:var(--ink-2);cursor:pointer;transition:none}
+  .seg[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+  .search{position:relative;flex:1;max-width:340px}
+  .search input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;
+    padding:7px 30px 7px 32px;font-size:14px;box-shadow:var(--shadow)}
+  .search input::placeholder{color:var(--ink-3)}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+  .search .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;
+    color:var(--ink-3);cursor:pointer;padding:3px 5px;border-radius:5px;display:none;font-size:15px;line-height:1}
+  .search.filled .x{display:block}
+  .search .x:hover{background:var(--line-2);color:var(--ink)}
+
+  .btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 13px;
+    cursor:pointer;font-size:13.5px;font-weight:500;box-shadow:var(--shadow);white-space:nowrap}
+  .btn:hover{background:#FAFBFC}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#3A5880}
+  .btn.quiet{background:transparent;border-color:transparent;box-shadow:none;color:var(--ink-2);padding:5px 9px}
+  .btn.quiet:hover{background:var(--line-2);color:var(--ink)}
+  .btn.tiny{padding:3px 9px;font-size:12.5px}
+  .btn.danger{color:var(--red);border-color:transparent;background:transparent;box-shadow:none}
+  .btn.danger:hover{background:var(--red-bg)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .iconbtn{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    width:34px;height:32px;display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;color:var(--ink-2);box-shadow:var(--shadow);padding:0}
+  .iconbtn:hover{background:#FAFBFC;color:var(--ink)}
+  .iconbtn.overdue{color:var(--red);border-color:#E7BDB6;background:var(--red-bg)}
+  .iconbtn.overdue:hover{background:#F9E4E0}
+  .iconbtn .badge{display:none;position:absolute;top:-3px;right:-3px;width:8px;height:8px;
+    border-radius:50%;background:var(--red);border:1.5px solid var(--bg)}
+  .iconbtn.overdue .badge{display:block}
+  .iconbtn.empty{opacity:.4;pointer-events:none}
+
+  /* overflow menu */
+  .menu-wrap{position:relative}
+  .menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--r);box-shadow:var(--shadow-lift);padding:5px;min-width:216px;z-index:40;display:none}
+  .menu.open{display:block}
+  .menu button{display:flex;width:100%;align-items:center;gap:9px;border:0;background:transparent;text-align:left;
+    padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;font-size:13.5px}
+  .menu button:hover{background:var(--line-2)}
+  .menu .sep{height:1px;background:var(--line);margin:5px 8px}
+  .menu .note{padding:6px 10px 8px;font-size:12px;color:var(--ink-3);line-height:1.4}
+
+  /* ---------- status strip ---------- */
+  .strip{display:flex;align-items:center;gap:18px;margin-bottom:18px;font-size:13px;color:var(--ink-2);
+    flex-wrap:wrap;min-height:20px}
+  .stat{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
+  .dot.amber{background:var(--amber)} .dot.red{background:var(--red)}
+  .stat b{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+  .stat.link{cursor:pointer} .stat.link:hover b{text-decoration:underline}
+
+  .view{display:none} .view.active{display:block}
+
+  /* ---------- board ---------- */
+  .board{display:grid;grid-template-columns:repeat(3,minmax(250px,1fr));gap:18px;align-items:start}
+  .col-head{display:flex;align-items:center;gap:8px;margin:0 4px 11px}
+  .col-head h2{margin:0;font-size:13px;font-weight:620;letter-spacing:-.005em}
+  .pill{background:#E9EBEF;color:var(--ink-2);border-radius:20px;padding:1px 8px;font-size:11.5px;
+    font-weight:600;font-variant-numeric:tabular-nums}
+  .drop{min-height:70px;display:flex;flex-direction:column;gap:10px;padding:3px;border-radius:var(--r)}
+  .drop.over{background:#E9EDF2}
+  .ghostline{height:2px;background:var(--accent);border-radius:2px;margin:-5px 0}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;
+    cursor:grab;box-shadow:var(--shadow);position:relative}
+  .del{position:absolute;top:7px;right:7px;width:22px;height:22px;border:0;border-radius:6px;
+    background:transparent;color:var(--ink-3);cursor:pointer;font-size:16px;line-height:1;
+    display:flex;align-items:center;justify-content:center;opacity:0;padding:0}
+  .card:hover .del,.card:focus-within .del,.card.open .del{opacity:1}
+  .del:hover{background:var(--red-bg);color:var(--red)}
+  @media (hover:none){ .del{opacity:1} }
+  .card:hover{border-color:#D5D9E0}
+  .card:active{cursor:grabbing}
+  .card.dragging{opacity:.3}
+  .card.open{box-shadow:var(--shadow-lift);border-color:#CDD3DB}
+  .card.flagged{background:var(--amber-bg);border-color:var(--amber-line)}
+  .summary{font-weight:600;font-size:14.5px;line-height:1.38;letter-spacing:-.005em;
+    max-width:32ch;overflow-wrap:anywhere;padding-right:22px}
+  .row2{display:flex;align-items:center;gap:9px;margin-top:9px;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
+  .who{font-weight:500;color:var(--ink-2)}
+  .who.none{color:var(--ink-3);font-style:italic}
+  .when{font-variant-numeric:tabular-nums}
+  .when.soon{color:var(--amber);font-weight:600}
+  .when.late{color:var(--red);font-weight:600}
+  .src{background:transparent;border:0;padding:0;color:var(--ink-3);cursor:pointer;font-size:12.5px;
+    text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+  .src:hover{color:var(--accent);text-decoration-color:currentColor}
+  .confirmbar{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:9px;border-top:1px solid var(--amber-line);
+    font-size:12.5px;color:var(--amber)}
+  .confirmbar button{background:var(--surface);border:1px solid var(--amber-line);color:var(--amber);
+    border-radius:6px;padding:2px 9px;font-size:12px;font-weight:550;cursor:pointer}
+  .confirmbar button:hover{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .detail{display:none;margin-top:11px;padding-top:11px;border-top:1px solid var(--line-2);
+    font-size:13.5px;line-height:1.55;color:var(--ink-2);white-space:pre-wrap}
+  .card.open .detail{display:block}
+  .cardacts{display:none;gap:4px;margin-top:11px}
+  .card.open .cardacts{display:flex}
+
+  /* ---------- empty ---------- */
+  .empty{color:var(--ink-3);font-size:13.5px;padding:16px 6px;line-height:1.5}
+  .zero{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+    padding:34px 32px;max-width:520px;margin-top:6px}
+  .zero h3{margin:0 0 8px;font-size:16px;font-weight:620;letter-spacing:-.01em}
+  .zero p{margin:0 0 16px;color:var(--ink-2);font-size:14px;line-height:1.55}
+  .zero ol{margin:0 0 18px;padding-left:19px;color:var(--ink-2);font-size:14px;line-height:1.75}
+  .zero code{background:var(--line-2);border-radius:4px;padding:1px 5px;font-size:13px}
+
+  /* ---------- notes ---------- */
+  .notes{display:grid;grid-template-columns:220px 1fr;gap:30px;align-items:start}
+  .rail h3{margin:0 0 8px;font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:620}
+  .rail section+section{margin-top:24px}
+  .tiles{display:flex;flex-direction:column;gap:3px}
+  .tile{display:flex;justify-content:space-between;gap:8px;align-items:center;text-align:left;
+    background:transparent;border:0;border-radius:7px;padding:6px 9px;cursor:pointer;font-size:13.5px;color:var(--ink-2)}
+  .tile:hover{background:#E9EBEF;color:var(--ink)}
+  .tile[aria-pressed="true"]{background:var(--accent);color:#fff}
+  .tile .n{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .tile[aria-pressed="true"] .n{color:#C7D3E2}
+  .tile-empty{color:var(--ink-3);font-size:12.5px;padding:3px 9px;font-style:italic}
+
+  .grp{margin-bottom:2px}
+  .grphead{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:transparent;
+    border:1px solid transparent;border-radius:7px;padding:6px 9px;cursor:pointer;font-size:13.5px;
+    font-weight:600;color:var(--ink)}
+  .grphead:hover{background:#E9EBEF}
+  .grphead[aria-pressed="true"]{background:var(--accent);color:#fff}
+  .grphead .chev{width:11px;flex:none;color:var(--ink-3);font-size:9px;transition:none}
+  .grphead[aria-pressed="true"] .chev{color:#C7D3E2}
+  .grphead .n{font-size:11.5px;font-weight:500;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .grphead[aria-pressed="true"] .n{color:#C7D3E2}
+  .grphead .rm{opacity:0;border:0;background:transparent;color:var(--ink-3);cursor:pointer;
+    font-size:14px;line-height:1;padding:0 2px;border-radius:4px}
+  .grp:hover .rm{opacity:1}
+  .grphead .rm:hover{color:var(--red)}
+  .grphead[aria-pressed="true"] .rm{color:#C7D3E2}
+  .grpkids{padding-left:13px;border-left:1px solid var(--line);margin:2px 0 6px 13px}
+  .droptarget.over{background:var(--accent-soft);border-color:#B9CCE2}
+  .tile[draggable="true"]{cursor:grab}
+  .tile.dragging{opacity:.35}
+  .railfoot{margin-top:8px;padding-left:9px}
+  .railfoot button{background:transparent;border:0;color:var(--ink-3);font-size:12.5px;cursor:pointer;padding:2px 0}
+  .railfoot button:hover{color:var(--accent)}
+  .ungrp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);
+    padding:8px 9px 4px;border-radius:7px;border:1px solid transparent}
+
+  .notecard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:17px 19px;box-shadow:var(--shadow);margin-bottom:14px}
+  .notecard.prep{border-left:3px solid var(--accent);background:#FCFDFE}
+  .prephead{display:flex;align-items:center;gap:9px;margin:0 0 11px;font-size:11.5px;
+    text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:620}
+  .prephead::after{content:"";flex:1;height:1px;background:var(--line)}
+  .heldhead{margin-top:26px}
+  .badge-prep{background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:1px 7px;
+    font-size:11px;font-weight:620;text-transform:uppercase;letter-spacing:.05em}
+  .chk-prep{background:var(--accent-soft);border-color:#C3D3E5}
+  .nc-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:3px}
+  .nc-title{font-size:15.5px;font-weight:640;letter-spacing:-.01em;line-height:1.3}
+  .nc-sub{font-size:12.5px;color:var(--ink-3);margin-bottom:13px}
+  .nc-list{margin:0;padding:0;list-style:none;font-size:14px;line-height:1.6;color:var(--ink)}
+  .nc-list li{position:relative;padding-left:16px;margin-bottom:5px}
+  .nc-list li::before{content:"";position:absolute;left:3px;top:.62em;width:4px;height:4px;border-radius:50%;background:var(--ink-3)}
+  .nc-list li.hid{display:none}
+  .nc-list li.dec{font-weight:550}
+  .nc-list li.dec::before{background:var(--accent);border-radius:1px}
+  .nc-list li.q::before{background:transparent;border:1px solid var(--ink-3);border-radius:50%;top:.55em}
+  .nc-list li.d1{padding-left:34px;font-size:13.5px;color:var(--ink-2);margin-bottom:3px}
+  .nc-list li.d1::before{left:21px;width:4px;height:1.5px;border-radius:0;background:var(--line);top:.75em}
+  .nc-list li.d2{padding-left:52px;font-size:13px;color:var(--ink-2);margin-bottom:3px}
+  .nc-list li.d2::before{left:39px;width:3px;height:3px;background:transparent;border:1px solid var(--line);top:.68em}
+  .nc-list li.hd{padding-left:0;margin:16px 0 7px;font-size:11.5px;font-weight:650;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+  .nc-list li.hd:first-child{margin-top:0}
+  .nc-list li.hd::before{display:none}
+  .nc-list li.hd.d1{padding-left:18px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:620;color:var(--ink)}
+  .nc-foot{display:flex;align-items:center;gap:14px;margin-top:12px;font-size:13px}
+  .lnk{background:transparent;border:0;padding:0;color:var(--accent);cursor:pointer;font-size:13px;font-weight:500}
+  .lnk:hover{text-decoration:underline}
+  mark{background:#FFF1B8;color:inherit;border-radius:2px;padding:0 1px}
+
+  /* note line → action */
+  .nc-list li .li-act{position:absolute;right:0;top:1px;opacity:0;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink-2);width:20px;height:20px;border-radius:5px;cursor:pointer;
+    font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:var(--shadow)}
+  .nc-list li:hover .li-act{opacity:1}
+  .nc-list li .li-act:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  @media (hover:none){ .nc-list li .li-act{opacity:1} }
+
+  /* prep carry-over */
+  .carry{background:var(--accent-soft);border:1px solid #D3DFEC;border-radius:8px;padding:10px 12px;margin:2px 0 13px}
+  .carry-h{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);
+    margin-bottom:5px;display:flex;align-items:center;gap:7px}
+  .carry-h::after{content:"";flex:1;height:1px;background:#CBDAEA}
+  .carry-sub{font-size:11px;font-weight:600;color:var(--ink-2);margin:7px 0 3px}
+  .carry-list{margin:0;padding:0 0 0 16px;font-size:13px;line-height:1.5;color:var(--ink)}
+  .carry-list li{margin-bottom:2px}
+  .carry-list.q li{list-style:none;position:relative;padding-left:15px}
+  .carry-list.q li::before{content:"?";position:absolute;left:0;color:var(--accent);font-weight:700}
+  .carry-meta{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .carry-go{background:transparent;border:0;padding:0;margin:0;font:inherit;text-align:left;color:var(--ink);
+    cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:2px}
+  .carry-go:hover{color:var(--accent);text-decoration-color:var(--accent)}
+
+  /* ---------- modal ---------- */
+  .ov{display:none;position:fixed;inset:0;background:rgba(20,24,32,.34);backdrop-filter:blur(2px);z-index:60;
+    align-items:flex-start;justify-content:center;padding:7vh 16px;overflow:auto}
+  .ov.open{display:flex}
+  .modal{background:var(--surface);border-radius:14px;width:100%;max-width:530px;padding:24px;box-shadow:0 18px 50px rgba(20,24,32,.24)}
+  .modal h3{margin:0 0 18px;font-size:17px;font-weight:640;letter-spacing:-.01em}
+  .f{margin-bottom:15px}
+  .f label{display:block;font-size:12.5px;font-weight:550;color:var(--ink-2);margin-bottom:6px}
+  .f input,.f textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+    background:var(--surface);font-family:inherit;font-size:14px}
+  .f input:focus,.f textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+  .f textarea{min-height:96px;resize:vertical;line-height:1.55}
+  .f .hint{display:block;font-size:12px;color:var(--ink-3);margin-top:5px}
+  .edtools{display:flex;align-items:center;gap:3px;margin-bottom:6px}
+  .kbd{font-size:11.5px;color:var(--ink-3)}
+  #nBullets{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;
+    line-height:1.65;tab-size:2}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+  .chk{display:flex;align-items:flex-start;gap:9px;background:var(--amber-bg);border:1px solid var(--amber-line);
+    border-radius:8px;padding:11px 13px;font-size:13.5px;color:var(--ink)}
+  .chk input{margin-top:2px}
+  .chk span small{display:block;color:var(--ink-2);font-size:12.5px;margin-top:2px}
+  .macts{display:flex;gap:9px;align-items:center;margin-top:22px}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(6px);background:#1A1D23;color:#fff;
+    padding:10px 17px;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;
+    transition:opacity .16s,transform .16s;max-width:90vw;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.2);
+    display:flex;align-items:center;gap:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast .undo{background:transparent;border:0;color:#9FC2F0;font-weight:600;font-size:13.5px;
+    cursor:pointer;padding:2px 4px;border-radius:5px}
+  .toast .undo:hover{color:#fff;background:rgba(255,255,255,.12)}
+
+  @media (max-width:900px){ .notes{grid-template-columns:1fr} .two{grid-template-columns:1fr} }
+  @media (max-width:860px){ .board{grid-template-columns:1fr} .summary{max-width:none} }
+  @media (max-width:740px){ .top{flex-wrap:wrap} .search{max-width:none;order:9;flex-basis:100%} }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <span class="brand">Meeting Hub</span>
+    <div class="segment" role="tablist">
+      <button class="seg" role="tab" aria-selected="true" data-tab="actions">Actions</button>
+      <button class="seg" role="tab" aria-selected="false" data-tab="notes">Notes</button>
+    </div>
+    <div class="search" id="searchWrap">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Search notes and actions" autocomplete="off" aria-label="Search">
+      <button class="x" id="qClear" aria-label="Clear search">×</button>
+    </div>
+    <span class="sp"></span>
+    <button class="btn primary" id="btnPrimary">Paste from Claude</button>
+    <div class="menu-wrap">
+      <button class="iconbtn" id="btnAdd" aria-haspopup="true" aria-expanded="false" aria-label="Create">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+      </button>
+      <div class="menu" id="addMenu">
+        <button id="mNew">Action</button>
+        <button id="mNewNote">Note</button>
+        <button id="mNewPrep">Prep — upcoming meeting</button>
+      </div>
+    </div>
+    <button class="iconbtn" id="btnSave" aria-label="Save backup to your computer">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+        stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3v9"/><path d="M6.5 8.5 10 12l3.5-3.5"/><path d="M3.5 13.5v2a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-2"/>
+      </svg>
+      <span class="badge" id="saveBadge"></span>
+    </button>
+    <div class="menu-wrap">
+      <button class="btn quiet" id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="More">⋯</button>
+      <div class="menu" id="menu">
+        <button id="mManual">Paste manually…</button>
+        <div class="sep"></div>
+        <button id="mSaveJson">Save backup (.json)</button>
+        <button id="mExportMd">Export notes (.md)</button>
+        <button id="mRestore">Restore from file…</button>
+        <div class="note" id="backupNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip" id="strip"></div>
+
+  <div class="ov" id="pasteOv">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Paste from Claude</h3>
+      <div class="f"><label for="pasteText">JSON block from the end of your meeting</label>
+        <textarea id="pasteText" style="min-height:150px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px"
+          placeholder='{ "meeting": "...", "people": [...], "content": [...], "actions": [...] }'></textarea>
+        <span class="hint" id="pasteHint">Paste the whole block, braces included.</span></div>
+      <div class="macts"><button class="btn primary" id="pasteGo">Import</button>
+        <button class="btn quiet" id="pasteCancel">Cancel</button></div>
+    </div>
+  </div>
+
+  <div class="view active" id="view-actions">
+    <div id="boardZero"></div>
+    <div class="board" id="board">
+      <div><div class="col-head"><h2>To do</h2><span class="pill" id="c-todo">0</span></div><div class="drop" data-col="todo"></div></div>
+      <div><div class="col-head"><h2>In progress</h2><span class="pill" id="c-doing">0</span></div><div class="drop" data-col="doing"></div></div>
+      <div><div class="col-head"><h2>Done</h2><span class="pill" id="c-done">0</span></div><div class="drop" data-col="done"></div></div>
+    </div>
+  </div>
+
+  <div class="view" id="view-notes">
+    <div class="notes">
+      <div class="rail">
+        <section><h3>People</h3><div class="tiles" id="tiles-people"></div></section>
+        <section><h3>Subjects</h3><div class="tiles" id="tiles-subjects"></div>
+          <div class="railfoot"><button id="newGroup">+ New category</button></div></section>
+      </div>
+      <div><div id="notecards"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="actOv">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aTitle">
+    <h3 id="aTitle">Edit action</h3>
+    <div class="f"><label for="fSummary">Summary</label>
+      <input type="text" id="fSummary" maxlength="140" placeholder="What needs to happen">
+      <span class="hint">One line. This is all you see on a collapsed card.</span></div>
+    <div class="f"><label for="fDetail">Detail</label>
+      <textarea id="fDetail" placeholder="Context, precisions, what was said…"></textarea></div>
+    <div class="two">
+      <div class="f"><label for="fOwner">Owner</label><input type="text" id="fOwner" placeholder="Leave empty if unknown"></div>
+      <div class="f"><label for="fDue">Due date</label><input type="date" id="fDue"></div>
+    </div>
+    <div class="f"><label for="fMeeting">Meeting</label><input type="text" id="fMeeting" list="meetingList">
+      <datalist id="meetingList"></datalist></div>
+    <div class="f"><label class="chk"><input type="checkbox" id="fConfirm">
+      <span>Needs confirming<small>Came from an uncertain note. Cannot move to Done until cleared.</small></span></label></div>
+    <div class="macts"><button class="btn primary" id="aSave">Save</button>
+      <button class="btn quiet" id="aCancel">Cancel</button>
+      <span class="sp"></span><button class="btn danger" id="aDelete">Delete</button></div>
+  </div>
+</div>
+
+<div class="ov" id="noteOv">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nTitle">
+    <h3 id="nTitle">Edit note</h3>
+    <div class="f"><label for="nSubject">Subject</label><input type="text" id="nSubject"></div>
+    <div class="two">
+      <div class="f"><label for="nPeople">People</label><input type="text" id="nPeople" placeholder="Shari, Tom">
+        <span class="hint">Comma-separated</span></div>
+      <div class="f"><label for="nDate">Date</label><input type="date" id="nDate"></div>
+    </div>
+    <div class="f"><label class="chk chk-prep"><input type="checkbox" id="nPrep">
+      <span>Coming up — this is meeting prep<small>Pinned at the top until the meeting happens.</small></span></label></div>
+    <div class="f"><label for="nBullets">Notes</label>
+      <div class="edtools">
+        <button type="button" class="btn quiet tiny" id="tOut" title="Outdent (Shift+Tab)">⇤</button>
+        <button type="button" class="btn quiet tiny" id="tIn" title="Indent (Tab)">⇥</button>
+        <button type="button" class="btn quiet tiny" id="tHead" title="Turn line into a heading">Heading</button>
+        <span class="sp"></span>
+        <span class="kbd">Tab to indent · Ctrl+Enter to save</span>
+      </div>
+      <textarea id="nBullets" style="min-height:200px" placeholder="One idea per line"></textarea>
+      <span class="hint">One line = one bullet. Indent with 2 spaces for a sub-point.
+        End a line with <code>:</code> to make it a heading.</span></div>
+    <div class="macts"><button class="btn primary" id="nSave">Save</button>
+      <button class="btn quiet" id="nCancel">Cancel</button>
+      <span class="sp"></span><button class="btn danger" id="nDelete">Delete</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
+      GROUPS_KEY="meeting-groups-v1";
+const COLS=["todo","doing","done"];
+let state=load(KEY), notesState=load(NOTES_KEY), groupsState=load(GROUPS_KEY);
+let tab="actions", query="", activePerson="", activeSubject="", activeGroup="", openCard=null,
+    editing=null, editingNote=null, dragId=null, dragSubject=null, linkNoteId=null;
+
+function load(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):[]}catch(e){return[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(NOTES_KEY,JSON.stringify(notesState));
+  localStorage.setItem(GROUPS_KEY,JSON.stringify(groupsState))}
+  catch(e){toast("Could not save. Export a backup now.")}}
+function toast(m){const t=document.getElementById("toast");t.innerHTML="";t.style.pointerEvents="none";
+  t.appendChild(document.createTextNode(m));t.classList.add("show");
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2800)}
+function toastUndo(m,fn){
+  const t=document.getElementById("toast");t.innerHTML="";t.style.pointerEvents="auto";
+  t.appendChild(document.createTextNode(m));
+  const b=document.createElement("button");b.className="undo";b.textContent="Undo";
+  b.onclick=()=>{fn();t.classList.remove("show");t.style.pointerEvents="none"};
+  t.appendChild(b);t.classList.add("show");
+  clearTimeout(t._h);t._h=setTimeout(()=>{t.classList.remove("show");t.style.pointerEvents="none"},7000);
+}
+function deleteAction(id){
+  const i=state.findIndex(x=>x.id===id); if(i<0)return;
+  const removed=state[i];
+  state.splice(i,1);
+  if(openCard===id)openCard=null;
+  save();renderAll();
+  toastUndo("Deleted “"+oneLine(removed.summary,34)+"”",()=>{
+    state.splice(Math.min(i,state.length),0,removed);save();renderAll();toast("Restored.");
+  });
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function fp(a){return (a.summary||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+(a.meeting||"").toLowerCase().trim()}
+function oneLine(s,n){s=String(s||"").replace(/\s+/g," ").trim();return s.length>n?s.slice(0,n-1)+"…":s}
+function trimEnd(s){return String(s??"").replace(/\s+$/,"")}
+function parseBullet(raw){
+  const s=trimEnd(raw);
+  const m=/^([ \t]*)([\s\S]*)$/.exec(s);
+  const indent=m[1].replace(/\t/g,"  ").length;
+  let text=m[2].replace(/^[-•*·o]\s+/,"");
+  const depth=Math.min(2,Math.floor(indent/2));
+  let head=false;
+  if(/^#{1,3}\s+/.test(text)){head=true;text=text.replace(/^#{1,3}\s*/,"")}
+  else if(/^[^:]{1,60}:$/.test(text)){head=true;text=text.replace(/:\s*$/,"")}
+  return {text:text,depth:depth,head:head};
+}
+function notePeople(n){return Array.isArray(n.people)?n.people.filter(Boolean):[]}
+function noteBullets(n){
+  if(Array.isArray(n.bullets))return n.bullets.filter(b=>trimEnd(b));
+  if(Array.isArray(n.content))return n.content.filter(b=>trimEnd(b));
+  return String(n.content||"").split(/\n/).map(trimEnd).filter(Boolean);
+}
+/* actions tied to a note by stable id, or (fallback) by matching meeting name */
+function linkedActions(n){
+  const out=[],seen=new Set();
+  state.forEach(a=>{
+    const linked=a.noteId===n.id||(Array.isArray(n.actionIds)&&n.actionIds.includes(a.id));
+    const sameMeeting=n.meeting&&a.meeting===n.meeting;
+    if((linked||sameMeeting)&&!seen.has(a.id)){seen.add(a.id);out.push(a)}
+  });
+  return out;
+}
+/* best-guess owner from a note line: @mention first, else a known person named at the start */
+function guessOwner(text,people){
+  const at=/(^|[\s(])@([A-Za-zÀ-ÿ][\wÀ-ÿ'’.-]*)/.exec(text);
+  if(at)return at[2];
+  for(const p of people||[]){
+    const first=String(p).split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    if(first&&new RegExp("^\\s*"+first+"\\s*[:\\-–—]","i").test(text))return p;
+  }
+  return "";
+}
+
+/* ---------- dates ---------- */
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function today0(){const d=new Date();d.setHours(0,0,0,0);return d}
+function dueInfo(s){
+  if(!s)return null;
+  const p=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if(!p)return {label:s,cls:""};
+  const d=new Date(+p[1],+p[2]-1,+p[3]); if(isNaN(d))return {label:s,cls:""};
+  const days=Math.round((d-today0())/86400000);
+  const nice=d.getDate()+" "+MON[d.getMonth()]+(d.getFullYear()!==today0().getFullYear()?" "+d.getFullYear():"");
+  if(days<0) return {label:"Overdue · "+nice, cls:"late", days};
+  if(days===0) return {label:"Due today", cls:"late", days};
+  if(days===1) return {label:"Due tomorrow", cls:"soon", days};
+  if(days<=5) return {label:"In "+days+" days", cls:"soon", days};
+  return {label:nice, cls:"", days};
+}
+
+/* ---------- search ---------- */
+function hay(a){return [a.summary,a.detail,a.owner,a.meeting].join(" ").toLowerCase()}
+function noteHay(n){return [n.meeting,notePeople(n).join(" "),noteBullets(n).join(" ")].join(" ").toLowerCase()}
+function hl(text){
+  const t=esc(text); if(!query)return t;
+  try{return t.replace(new RegExp("("+query.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<mark>$1</mark>")}
+  catch(e){return t}
+}
+function matchA(a){return !query || hay(a).includes(query)}
+function matchN(n){return !query || noteHay(n).includes(query)}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll(".seg").forEach(s=>s.onclick=()=>setTab(s.dataset.tab));
+function setTab(t){
+  tab=t;
+  document.querySelectorAll(".seg").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.tab===t)));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+t));
+  renderAll();
+}
+
+/* ---------- status strip ---------- */
+function renderStrip(){
+  const el=document.getElementById("strip");
+  if(tab==="notes"){
+    const n=notesState.length, p=new Set(notesState.flatMap(notePeople)).size;
+    el.innerHTML = n
+      ? '<span class="stat"><b>'+n+'</b> note'+(n>1?"s":"")+'</span><span class="stat"><b>'+p+'</b> '+(p===1?"person":"people")+'</span>'
+        +(activePerson||activeSubject||activeGroup||query?'<button class="lnk" id="clrAll">Clear filters</button>':"")
+      : "";
+    const c=document.getElementById("clrAll");
+    if(c)c.onclick=()=>{activePerson="";activeSubject="";activeGroup="";setQuery("");renderAll()};
+    return;
+  }
+  const open=state.filter(a=>a.col!=="done");
+  const conf=open.filter(a=>a.confirm).length;
+  const late=open.filter(a=>{const d=dueInfo(a.due);return d&&d.days!==undefined&&d.days<=0}).length;
+  if(!state.length){el.innerHTML="";return}
+  let h='<span class="stat"><span class="dot"></span><b>'+open.length+'</b> open</span>';
+  if(late)h+='<span class="stat link" data-jump="late"><span class="dot red"></span><b>'+late+'</b> overdue</span>';
+  if(conf)h+='<span class="stat link" data-jump="conf"><span class="dot amber"></span><b>'+conf+'</b> to confirm</span>';
+  if(query)h+='<span class="stat">matching “'+esc(query)+'”</span>';
+  el.innerHTML=h;
+  el.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>{
+    setQuery(""); const kind=b.dataset.jump;
+    const target=state.find(a=>a.col!=="done" && (kind==="conf"?a.confirm:(()=>{const d=dueInfo(a.due);return d&&d.days<=0})()));
+    if(target){openCard=target.id;renderAll();
+      const el2=document.querySelector('[data-id="'+target.id+'"]');
+      if(el2)el2.scrollIntoView({block:"center",behavior:"smooth"});}
+  });
+}
+
+/* ---------- board ---------- */
+function renderBoard(){
+  const zero=document.getElementById("boardZero");
+  const board=document.getElementById("board");
+  if(!state.length && !notesState.length){
+    board.style.display="none";
+    zero.innerHTML='<div class="zero"><h3>Nothing here yet</h3>'
+      +'<p>This board fills itself from your meetings. Nothing to set up.</p>'
+      +'<ol><li>In Claude, say <code>capture</code> and take your notes</li>'
+      +'<li>Say <code>fin de réunion</code> and answer the questions</li>'
+      +'<li>Copy the JSON block, then hit <b>Paste from Claude</b></li></ol>'
+      +'<button class="btn" id="zNew">Or add an action by hand</button></div>';
+    document.getElementById("zNew").onclick=()=>openAct(null);
+    return;
+  }
+  zero.innerHTML=""; board.style.display="";
+  COLS.forEach(col=>{
+    const box=document.querySelector('.drop[data-col="'+col+'"]');
+    const all=state.filter(a=>a.col===col);
+    const items=all.filter(matchA);
+    document.getElementById("c-"+col).textContent=all.length;
+    box.innerHTML = items.length ? items.map(cardHTML).join("")
+      : '<div class="empty">'+(query?"No match here.":col==="todo"?"Nothing to do.":col==="doing"?"Nothing in progress.":"Nothing done yet.")+'</div>';
+  });
+  wireCards();
+}
+
+function cardHTML(a){
+  const d=dueInfo(a.due);
+  const who=a.owner?'<span class="who">'+hl(a.owner)+'</span>':'<span class="who none">no owner</span>';
+  const when=d?'<span class="when '+d.cls+'">'+esc(d.label)+'</span>':"";
+  const src=a.meeting?'<button class="src" data-src="'+esc(a.meeting)+'">'+hl(a.meeting)+'</button>':"";
+  const conf=a.confirm?'<div class="confirmbar"><span>Needs confirming</span><span class="sp"></span>'
+    +'<button data-confirm="'+a.id+'">Confirm</button></div>':"";
+  const det=a.detail?'<div class="detail">'+hl(a.detail)+'</div>'
+    :'<div class="detail"><em style="color:var(--ink-3)">No detail recorded.</em></div>';
+  const left=a.col!=="todo"?'<button class="btn quiet tiny" data-move="'+a.id+'" data-dir="-1">← Back</button>':"";
+  const right=a.col!=="done"?'<button class="btn quiet tiny" data-move="'+a.id+'" data-dir="1">Forward →</button>':"";
+  return '<article class="card'+(a.confirm?" flagged":"")+(openCard===a.id?" open":"")
+    +'" draggable="true" data-id="'+a.id+'" tabindex="0">'
+    +'<button class="del" data-del="'+a.id+'" aria-label="Delete this action" title="Delete">×</button>'
+    +'<div class="summary">'+hl(a.summary)+'</div>'
+    +'<div class="row2">'+who+(when?'<span style="color:var(--line)">·</span>'+when:"")+(src?'<span class="sp"></span>'+src:"")+'</div>'
+    +conf+det
+    +'<div class="cardacts">'+left+right+'<span class="sp"></span>'
+    +'<button class="btn quiet tiny" data-edit="'+a.id+'">Edit</button></div></article>';
+}
+
+function wireCards(){
+  document.querySelectorAll(".card").forEach(el=>{
+    el.addEventListener("dragstart",e=>{dragId=el.dataset.id;el.classList.add("dragging");
+      e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",dragId)});
+    el.addEventListener("dragend",()=>{el.classList.remove("dragging");dragId=null;clearGhost()});
+    el.addEventListener("click",e=>{if(e.target.closest("button"))return;
+      openCard=openCard===el.dataset.id?null:el.dataset.id;renderBoard()});
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();
+      openCard=openCard===el.dataset.id?null:el.dataset.id;renderBoard()}});
+  });
+}
+function clearGhost(){document.querySelectorAll(".ghostline").forEach(g=>g.remove());
+  document.querySelectorAll(".drop").forEach(d=>d.classList.remove("over"))}
+function afterCard(box,y){
+  return [...box.querySelectorAll(".card:not(.dragging)")]
+    .find(c=>{const r=c.getBoundingClientRect();return y<r.top+r.height/2})||null;
+}
+document.querySelectorAll(".drop").forEach(box=>{
+  box.addEventListener("dragover",e=>{e.preventDefault();clearGhost();box.classList.add("over");
+    const b=afterCard(box,e.clientY);const g=document.createElement("div");g.className="ghostline";
+    b?box.insertBefore(g,b):box.appendChild(g)});
+  box.addEventListener("dragleave",e=>{if(!box.contains(e.relatedTarget))box.classList.remove("over")});
+  box.addEventListener("drop",e=>{e.preventDefault();
+    const id=e.dataTransfer.getData("text/plain")||dragId;const b=afterCard(box,e.clientY);
+    clearGhost();dropCard(id,box.dataset.col,b?b.dataset.id:null)});
+});
+function dropCard(id,col,beforeId){
+  const i=state.findIndex(x=>x.id===id);if(i<0)return;
+  const a=state[i];
+  if(col==="done"&&a.confirm){toast("Confirm this action first — it came from an uncertain note.");return}
+  state.splice(i,1);a.col=col;
+  let at;
+  if(beforeId){at=state.findIndex(x=>x.id===beforeId);if(at<0)at=state.length}
+  else{const last=[...state].reverse().find(x=>x.col===col);at=last?state.indexOf(last)+1:state.length}
+  state.splice(at,0,a);save();renderAll();
+}
+
+/* ---------- global clicks ---------- */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button");
+  if(!b){closeMenus();return}
+  if(b.dataset.move){const a=state.find(x=>x.id===b.dataset.move);
+    dropCard(a.id,COLS[Math.min(2,Math.max(0,COLS.indexOf(a.col)+ +b.dataset.dir))],null)}
+  if(b.dataset.confirm){const a=state.find(x=>x.id===b.dataset.confirm);
+    a.confirm=false;save();renderAll();toast("Confirmed.")}
+  if(b.dataset.edit)openAct(b.dataset.edit);
+  if(b.dataset.del)deleteAction(b.dataset.del);
+  if(b.dataset.editNote)openNote(b.dataset.editNote);
+  if(b.dataset.mkaction){
+    const n=notesState.find(x=>x.id===b.dataset.mkaction);
+    if(n){const text=(parseBullet(noteBullets(n)[+b.dataset.line]||"").text)||"";
+      openAct(null,{summary:text,detail:text.length>140?text:"",
+        owner:guessOwner(text,notePeople(n)),meeting:n.meeting||"",noteId:n.id});}
+  }
+  if(b.dataset.goaction){
+    const id=b.dataset.goaction;
+    setQuery("");            // clear search so the target card isn't filtered out
+    openCard=id;
+    setTab("actions");       // switches tab and re-renders the board with the card open
+    const el2=document.querySelector('[data-id="'+id+'"]');
+    if(el2)el2.scrollIntoView({block:"center",behavior:"smooth"});
+  }
+  if(b.dataset.src){activeSubject=b.dataset.src;activePerson="";setQuery("");setTab("notes")}
+  if(b.dataset.toActions){activeSubject="";setQuery(b.dataset.toActions);setTab("actions")}
+  if(!b.closest(".menu")&&b.id!=="btnMenu"&&b.id!=="btnAdd")closeMenus();
+});
+
+/* ---------- notes ---------- */
+function groupOf(subject){return groupsState.find(g=>(g.subjects||[]).includes(subject))}
+function groupCount(g,subjects){return (g.subjects||[]).reduce((n,s)=>n+(subjects[s]||0),0)}
+function assignSubject(subject,groupId){
+  groupsState.forEach(g=>{g.subjects=(g.subjects||[]).filter(s=>s!==subject)});
+  if(groupId){const g=groupsState.find(x=>x.id===groupId); if(g)g.subjects.push(subject)}
+  save();renderAll();
+}
+
+function renderNotes(){
+  const people={},subjects={};
+  notesState.forEach(n=>{notePeople(n).forEach(p=>people[p]=(people[p]||0)+1);
+    const s=n.meeting||"No subject";subjects[s]=(subjects[s]||0)+1});
+
+  const pB=document.getElementById("tiles-people");
+  pB.innerHTML=Object.keys(people).length?Object.entries(people).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+    .map(([n,c])=>tileHTML(n,c,n===activePerson,"person",false)).join(""):'<div class="tile-empty">No one yet</div>';
+  document.querySelectorAll(".tile[data-person]").forEach(el=>el.onclick=()=>{
+    activePerson=activePerson===el.dataset.person?"":el.dataset.person;renderAll()});
+
+  /* ----- subjects, grouped ----- */
+  const sB=document.getElementById("tiles-subjects");
+  const all=Object.keys(subjects).sort((a,b)=>subjects[b]-subjects[a]||a.localeCompare(b));
+  const grouped=new Set(groupsState.flatMap(g=>g.subjects||[]));
+  const loose=all.filter(s=>!grouped.has(s));
+  let h="";
+  groupsState.forEach(g=>{
+    const mine=all.filter(s=>(g.subjects||[]).includes(s));
+    const count=groupCount(g,subjects);
+    h+='<div class="grp" data-grp="'+g.id+'">'
+      +'<div class="grphead droptarget" data-grpdrop="'+g.id+'" aria-pressed="'+(activeGroup===g.id)+'" tabindex="0">'
+      +'<span class="chev">'+(g.collapsed?"▶":"▼")+'</span>'
+      +'<span style="flex:1">'+esc(g.name)+'</span>'
+      +'<span class="n">'+count+'</span>'
+      +'<button class="rm" data-grprm="'+g.id+'" aria-label="Remove category" title="Remove category">×</button></div>';
+    if(!g.collapsed){
+      h+='<div class="grpkids">'+(mine.length
+        ? mine.map(s=>tileHTML(s,subjects[s],s===activeSubject,"subject",true)).join("")
+        : '<div class="tile-empty">Drop a subject here</div>')+'</div>';
+    }
+    h+='</div>';
+  });
+  if(groupsState.length && loose.length) h+='<div class="ungrp droptarget" data-grpdrop="">Ungrouped</div>';
+  h+=loose.map(s=>tileHTML(s,subjects[s],s===activeSubject,"subject",true)).join("");
+  sB.innerHTML = all.length ? h : '<div class="tile-empty">No subjects yet</div>';
+  wireSubjectDnd();
+
+  /* ----- list ----- */
+  let list=notesState.filter(matchN);
+  if(activePerson)list=list.filter(n=>notePeople(n).includes(activePerson));
+  if(activeSubject)list=list.filter(n=>(n.meeting||"No subject")===activeSubject);
+  if(activeGroup){
+    const g=groupsState.find(x=>x.id===activeGroup);
+    const set=new Set(g?g.subjects||[]:[]);
+    list=list.filter(n=>set.has(n.meeting||"No subject"));
+  }
+
+  const box=document.getElementById("notecards");
+  if(!notesState.length){
+    box.innerHTML='<div class="zero"><h3>No notes yet</h3>'
+      +'<p>Notes arrive with your actions when you paste a meeting from Claude. People and subjects build themselves from there.</p>'
+      +'<button class="btn" id="zNote">Write one by hand</button></div>';
+    document.getElementById("zNote").onclick=()=>openNote(null);
+    return;
+  }
+  box.innerHTML="";
+  if(!list.length){box.innerHTML='<div class="empty">Nothing matches. Try clearing the filters.</div>'}
+  else{
+    const prep=list.filter(n=>n.status==="prep").sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
+    const held=list.filter(n=>n.status!=="prep").sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    let out="";
+    if(prep.length)out+='<div class="prephead">Coming up</div>'+prep.map(n=>noteCardHTML(n,true)).join("");
+    if(held.length)out+=(prep.length?'<div class="prephead heldhead">History</div>':"")
+      +held.map(n=>noteCardHTML(n,false)).join("");
+    box.innerHTML=out;
+  }
+  document.querySelectorAll(".nc-more").forEach(el=>el.onclick=()=>{
+    const ul=el.closest(".notecard").querySelector(".nc-list");
+    const hidden=ul.querySelectorAll("li.hid").length>0;
+    ul.querySelectorAll("li").forEach((li,i)=>{if(i>=5)li.classList.toggle("hid",!hidden)});
+    el.textContent=hidden?"Show less":"Show all "+ul.children.length;
+  });
+}
+
+function wireSubjectDnd(){
+  document.querySelectorAll(".tile[data-subject]").forEach(el=>{
+    el.onclick=()=>{activeSubject=activeSubject===el.dataset.subject?"":el.dataset.subject;
+      activeGroup="";renderAll()};
+    el.addEventListener("dragstart",e=>{dragSubject=el.dataset.subject;el.classList.add("dragging");
+      e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","subject:"+dragSubject)});
+    el.addEventListener("dragend",()=>{el.classList.remove("dragging");dragSubject=null;
+      document.querySelectorAll(".droptarget").forEach(t=>t.classList.remove("over"))});
+    /* dropping one loose subject onto another creates a category */
+    el.addEventListener("dragover",e=>{if(dragSubject&&dragSubject!==el.dataset.subject){e.preventDefault();el.classList.add("over")}});
+    el.addEventListener("dragleave",()=>el.classList.remove("over"));
+    el.addEventListener("drop",e=>{
+      e.preventDefault();e.stopPropagation();el.classList.remove("over");
+      const src=dragSubject,tgt=el.dataset.subject;
+      if(!src||src===tgt)return;
+      const existing=groupOf(tgt);
+      if(existing){assignSubject(src,existing.id);toast("Added to “"+existing.name+"”.");return}
+      const name=prompt("Name this category:",tgt);
+      if(!name||!name.trim())return;
+      groupsState.push({id:uid(),name:name.trim(),subjects:[tgt,src],collapsed:false});
+      save();renderAll();toast("Category “"+name.trim()+"” created.");
+    });
+  });
+
+  document.querySelectorAll("[data-grpdrop]").forEach(el=>{
+    el.addEventListener("dragover",e=>{if(dragSubject){e.preventDefault();el.classList.add("over")}});
+    el.addEventListener("dragleave",()=>el.classList.remove("over"));
+    el.addEventListener("drop",e=>{
+      e.preventDefault();el.classList.remove("over");
+      if(!dragSubject)return;
+      const gid=el.dataset.grpdrop;
+      assignSubject(dragSubject,gid||null);
+      toast(gid?"Moved into category.":"Removed from category.");
+    });
+  });
+
+  document.querySelectorAll(".grphead").forEach(el=>{
+    el.addEventListener("click",e=>{
+      if(e.target.closest("[data-grprm]"))return;
+      const id=el.dataset.grpdrop;
+      if(e.target.closest(".chev")){
+        const g=groupsState.find(x=>x.id===id);g.collapsed=!g.collapsed;save();renderAll();return;
+      }
+      activeGroup=activeGroup===id?"":id;activeSubject="";renderAll();
+    });
+  });
+  document.querySelectorAll("[data-grprm]").forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const i=groupsState.findIndex(g=>g.id===b.dataset.grprm);if(i<0)return;
+    const removed=groupsState[i];groupsState.splice(i,1);
+    if(activeGroup===removed.id)activeGroup="";
+    save();renderAll();
+    toastUndo("Category “"+removed.name+"” removed",()=>{
+      groupsState.splice(Math.min(i,groupsState.length),0,removed);save();renderAll()});
+  });
+}
+
+document.getElementById("newGroup").onclick=()=>{
+  const name=prompt("Category name:","");
+  if(!name||!name.trim())return;
+  groupsState.push({id:uid(),name:name.trim(),subjects:[],collapsed:false});
+  save();setTab("notes");toast("Drag subjects into it.");
+};
+function tileHTML(n,c,act,kind,drag){
+  return '<button class="tile" aria-pressed="'+act+'"'+(drag?' draggable="true"':'')+' data-'+kind+'="'+esc(n)+'">'
+    +'<span>'+esc(n)+'</span><span class="n">'+c+'</span></button>';
+}
+function niceDate(s){const d=dueInfo(s);if(!s)return"";const p=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if(!p)return s;const dt=new Date(+p[1],+p[2]-1,+p[3]);
+  return dt.getDate()+" "+MON[dt.getMonth()]+" "+dt.getFullYear()}
+/* live brief on a prep card: open actions on the subject + open questions from the last held meeting */
+function carryOverHTML(n){
+  if(!n.meeting)return "";
+  const key=n.meeting.trim().toLowerCase();
+  const sameSubj=s=>String(s||"").trim().toLowerCase()===key;
+  const openActs=state.filter(a=>a.col!=="done"&&sameSubj(a.meeting));
+  const past=notesState.filter(m=>m.id!==n.id&&m.status!=="prep"&&sameSubj(m.meeting))
+    .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const lastHeld=past[0];
+  const openQs=[];
+  if(lastHeld)noteBullets(lastHeld).forEach(bb=>{const p=parseBullet(bb);
+    if(p.text&&/^q(uestion)?\s*:/i.test(p.text))openQs.push(p.text.replace(/^q(uestion)?\s*:\s*/i,""))});
+  if(!openActs.length&&!openQs.length)return "";
+  let h='<div class="carry"><div class="carry-h">To carry over</div>';
+  if(openActs.length){
+    h+='<div class="carry-sub">Open actions ('+openActs.length+')</div><ul class="carry-list">'
+      +openActs.map(a=>{const d=dueInfo(a.due);
+        return '<li><button class="carry-go" data-goaction="'+a.id+'" title="Go to this action">'+hl(a.summary)+'</button>'
+          +(a.owner?' · <span class="carry-meta">'+esc(a.owner)+'</span>':'')
+          +(d?' · <span class="carry-meta">'+esc(d.label)+'</span>':'')+'</li>'}).join("")
+      +'</ul>';
+  }
+  if(openQs.length){
+    h+='<div class="carry-sub">Open questions'+(lastHeld.date?' — '+niceDate(lastHeld.date):'')+'</div>'
+      +'<ul class="carry-list q">'+openQs.map(t=>'<li>'+hl(t)+'</li>').join("")+'</ul>';
+  }
+  return h+'</div>';
+}
+function noteCardHTML(n,isPrep){
+  const bl=noteBullets(n);
+  const lis=bl.length?bl.map((b,i)=>{
+    const p=parseBullet(b);
+    if(!p.text)return "";
+    let cls="d"+p.depth;
+    if(p.head)cls+=" hd";
+    else if(/^decision\s*:/i.test(p.text))cls+=" dec";
+    else if(/^question\s*:/i.test(p.text))cls+=" q";
+    if(i>=5)cls+=" hid";
+    const mk=p.head?"":'<button class="li-act" data-mkaction="'+n.id+'" data-line="'+i+'" title="Turn into an action" aria-label="Turn into an action">→</button>';
+    return '<li class="'+cls+'">'+hl(p.text)+mk+'</li>';
+  }).join("")
+    :'<li style="color:var(--ink-3)"><em>No content.</em></li>';
+  const more=bl.length>5?'<button class="lnk nc-more">Show all '+bl.length+'</button>':"";
+  const ppl=notePeople(n);
+  const d=isPrep?dueInfo(n.date):null;
+  const when=isPrep?(d?d.label:"no date set"):niceDate(n.date);
+  const sub=[ppl.length?ppl.join(", "):"no one recorded", when].filter(Boolean).join(" · ");
+  const acts=linkedActions(n);
+  const link=acts.length?'<button class="lnk" data-to-actions="'+esc(n.meeting||"")+'">'+acts.length+" action"+(acts.length>1?"s":"")+'</button>':"";
+  const badge=isPrep?'<span class="badge-prep">Prep</span>':"";
+  return '<article class="notecard'+(isPrep?" prep":"")+'">'
+    +'<div class="nc-top"><div class="nc-titlewrap"><span class="nc-title">'+hl(n.meeting||"No subject")+'</span>'+badge+'</div>'
+    +'<span class="sp"></span><button class="btn quiet tiny" data-edit-note="'+n.id+'">Edit</button></div>'
+    +'<div class="nc-sub">'+hl(sub)+'</div>'
+    +(isPrep?carryOverHTML(n):"")
+    +'<ul class="nc-list">'+lis+'</ul>'
+    +((more||link)?'<div class="nc-foot">'+more+link+'</div>':"")
+    +'</article>';
+}
+
+/* ---------- modals ---------- */
+function openOv(o){o.classList.add("open")}
+function closeOv(o){o.classList.remove("open")}
+const actOv=document.getElementById("actOv"), noteOv=document.getElementById("noteOv"), pasteOv=document.getElementById("pasteOv");
+[actOv,noteOv,pasteOv].forEach(o=>o.addEventListener("click",e=>{if(e.target===o)closeOv(o)}));
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){[actOv,noteOv,pasteOv].forEach(closeOv);closeMenus()}
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();document.getElementById("q").focus()}
+});
+
+function openAct(id,prefill){
+  editing=id?state.find(x=>x.id===id):null;
+  linkNoteId=(!editing&&prefill&&prefill.noteId)?prefill.noteId:null;
+  const pre=(!editing&&prefill)?prefill:{};
+  document.getElementById("aTitle").textContent=editing?"Edit action":(linkNoteId?"New action — from note":"New action");
+  document.getElementById("fSummary").value=editing?editing.summary||"":(pre.summary||"");
+  document.getElementById("fDetail").value=editing?editing.detail||"":(pre.detail||"");
+  document.getElementById("fOwner").value=editing?editing.owner||"":(pre.owner||"");
+  document.getElementById("fDue").value=editing?editing.due||"":"";
+  document.getElementById("fMeeting").value=editing?editing.meeting||"":(pre.meeting||"");
+  document.getElementById("fConfirm").checked=editing?!!editing.confirm:false;
+  document.getElementById("aDelete").style.display=editing?"":"none";
+  document.getElementById("meetingList").innerHTML=
+    [...new Set([...state.map(a=>a.meeting),...notesState.map(n=>n.meeting)].filter(Boolean))]
+      .map(m=>'<option value="'+esc(m)+'">').join("");
+  openOv(actOv);document.getElementById("fSummary").focus();
+}
+document.getElementById("aCancel").onclick=()=>closeOv(actOv);
+document.getElementById("aSave").onclick=()=>{
+  const s=document.getElementById("fSummary").value.trim();
+  if(!s){toast("A summary is required.");document.getElementById("fSummary").focus();return}
+  const v={summary:oneLine(s,140),detail:document.getElementById("fDetail").value.trim(),
+    owner:document.getElementById("fOwner").value.trim(),due:document.getElementById("fDue").value,
+    meeting:document.getElementById("fMeeting").value.trim(),confirm:document.getElementById("fConfirm").checked};
+  if(editing){Object.assign(editing,v);}
+  else{
+    const a=Object.assign({id:uid(),date:"",col:"todo"},v);
+    if(linkNoteId){
+      a.noteId=linkNoteId;
+      const n=notesState.find(x=>x.id===linkNoteId);
+      if(n){if(!Array.isArray(n.actionIds))n.actionIds=[];n.actionIds.push(a.id);}
+    }
+    state.push(a);
+  }
+  const linked=linkNoteId;linkNoteId=null;
+  save();closeOv(actOv);renderAll();
+  if(linked)toast("Action created and linked to the note.");
+};
+document.getElementById("aDelete").onclick=()=>{
+  if(!editing)return;
+  const id=editing.id;closeOv(actOv);deleteAction(id);
+};
+
+function openNote(id,asPrep){
+  editingNote=id?notesState.find(x=>x.id===id):null;
+  const prep=editingNote?editingNote.status==="prep":!!asPrep;
+  document.getElementById("nTitle").textContent=editingNote?(prep?"Edit prep":"Edit note"):(asPrep?"New prep":"New note");
+  document.getElementById("nSubject").value=editingNote?editingNote.meeting||"":"";
+  document.getElementById("nPeople").value=editingNote?notePeople(editingNote).join(", "):"";
+  document.getElementById("nDate").value=editingNote?editingNote.date||"":"";
+  document.getElementById("nPrep").checked=prep;
+  document.getElementById("nBullets").value=editingNote?noteBullets(editingNote).join("\n"):"";
+  document.getElementById("nDelete").style.display=editingNote?"":"none";
+  openOv(noteOv);document.getElementById("nSubject").focus();
+}
+document.getElementById("nCancel").onclick=()=>closeOv(noteOv);
+document.getElementById("nSave").onclick=()=>{
+  const subject=document.getElementById("nSubject").value.trim();
+  const bullets=document.getElementById("nBullets").value.split("\n").map(trimEnd).filter(Boolean);
+  if(!subject&&!bullets.length){toast("Add a subject or at least one line.");return}
+  const v={meeting:subject,people:document.getElementById("nPeople").value.split(",").map(s=>s.trim()).filter(Boolean),
+    date:document.getElementById("nDate").value,bullets:bullets,
+    status:document.getElementById("nPrep").checked?"prep":"held"};
+  if(editingNote)Object.assign(editingNote,v); else notesState.push(Object.assign({id:uid()},v));
+  save();closeOv(noteOv);setTab("notes");
+};
+document.getElementById("nDelete").onclick=()=>{
+  if(!editingNote||!confirm("Delete this note?\n\n"+(editingNote.meeting||"Untitled")))return;
+  notesState=notesState.filter(x=>x.id!==editingNote.id);save();closeOv(noteOv);renderAll();
+};
+
+/* ---------- notes editor: indentation ---------- */
+const nb=document.getElementById("nBullets");
+function lineSpan(ta){
+  const v=ta.value;
+  let s=v.lastIndexOf("\n",ta.selectionStart-1)+1;
+  let e=v.indexOf("\n",ta.selectionEnd);
+  if(e===-1)e=v.length;
+  return {s:s,e:e,text:v.slice(s,e)};
+}
+function replaceSpan(ta,s,e,text,selStart,selEnd){
+  ta.setRangeText(text,s,e,"preserve");
+  if(selStart!==undefined){ta.selectionStart=selStart;ta.selectionEnd=selEnd}
+  ta.focus();
+}
+function shiftIndent(dir){
+  const {s,e,text}=lineSpan(nb);
+  const lines=text.split("\n");
+  let delta=0;
+  const out=lines.map(l=>{
+    if(dir>0){delta+=2;return "  "+l}
+    const m=/^(\t| {1,2})/.exec(l);
+    if(m){delta-=m[0].length;return l.slice(m[0].length)}
+    return l;
+  }).join("\n");
+  const a=nb.selectionStart,b=nb.selectionEnd;
+  replaceSpan(nb,s,e,out,Math.max(s,a+(dir>0?2:-Math.min(2,a-s))),b+delta);
+}
+function toggleHeading(){
+  const {s,e,text}=lineSpan(nb);
+  const out=text.split("\n").map(l=>{
+    const m=/^([ \t]*)(.*)$/.exec(l);
+    const body=m[2].replace(/^[-•*]\s+/,"");
+    if(!body)return l;
+    return m[1]+(/:$/.test(body)?body.replace(/:\s*$/,""):body+":");
+  }).join("\n");
+  replaceSpan(nb,s,e,out,s,s+out.length);
+}
+nb.addEventListener("keydown",e=>{
+  if(e.key==="Tab"){e.preventDefault();e.stopPropagation();shiftIndent(e.shiftKey?-1:1);return}
+  if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();document.getElementById("nSave").click();return}
+  if(e.key==="Enter"&&!e.shiftKey){
+    /* keep the indentation of the current line on the next one */
+    const v=nb.value,st=nb.selectionStart;
+    const ls=v.lastIndexOf("\n",st-1)+1;
+    const ind=(/^[ \t]*/.exec(v.slice(ls,st))||[""])[0];
+    if(ind){e.preventDefault();nb.setRangeText("\n"+ind,st,nb.selectionEnd,"end")}
+  }
+});
+document.getElementById("tIn").onclick=()=>shiftIndent(1);
+document.getElementById("tOut").onclick=()=>shiftIndent(-1);
+document.getElementById("tHead").onclick=toggleHeading;
+
+/* ---------- import ---------- */
+function importRaw(raw,viaClip){
+  raw=String(raw||"").trim();
+  if(!raw){toast(viaClip?"Clipboard is empty.":"Nothing to import.");return}
+  let data;
+  try{data=JSON.parse(raw.replace(/^```(?:json)?/,"").replace(/```$/,"").trim())}
+  catch(err){openOv(pasteOv);document.getElementById("pasteText").value=raw;
+    document.getElementById("pasteHint").textContent="That was not valid JSON. Check the block is complete.";return}
+  const list=Array.isArray(data)?data:(data.actions||[]);
+  const seen=new Set(state.map(fp));let added=0,dupes=0;
+  list.forEach(x=>{
+    const full=String(x.action||x.task||"").trim();
+    const a={id:uid(),summary:oneLine(x.summary||full,140),
+      detail:String(x.detail||x.note||(x.summary&&full&&full!==x.summary?full:"")).trim(),
+      owner:String(x.owner||"").trim(),due:String(x.due||"").trim(),
+      meeting:String(x.meeting||data.meeting||"").trim(),date:String(x.date||data.date||"").trim(),
+      confirm:x.confirm===true,col:"todo"};
+    if(!a.summary)return;
+    const k=fp(a);if(seen.has(k)){dupes++;return}
+    seen.add(k);state.push(a);added++;
+  });
+  let noteAdded=0, removedPrep=null, removedPrepAt=-1;
+  const meeting=String(data.meeting||"").trim();
+  const bullets=Array.isArray(data.content)?data.content.map(trimEnd).filter(Boolean)
+    :String(data.content||"").split(/\n/).map(trimEnd).filter(Boolean);
+  const ppl=Array.isArray(data.people)?data.people.map(p=>String(p).trim()).filter(Boolean):[];
+  if(data.merge===true && meeting){
+    const i=notesState.findIndex(n=>n.status==="prep"
+      &&(n.meeting||"").trim().toLowerCase()===meeting.toLowerCase());
+    if(i>=0){removedPrepAt=i;removedPrep=notesState[i];notesState.splice(i,1)}
+  }
+  if(meeting||bullets.length||ppl.length){
+    const dup=notesState.find(n=>(n.meeting||"").toLowerCase()===meeting.toLowerCase()
+      &&(n.date||"")===String(data.date||"").trim()
+      &&JSON.stringify(noteBullets(n))===JSON.stringify(bullets));
+    if(!dup){notesState.push({id:uid(),meeting:meeting,date:String(data.date||"").trim(),
+      people:ppl,bullets:bullets,status:"held"});noteAdded=1}
+  }
+  if(!added&&!noteAdded&&!removedPrep){toast("Nothing new — already imported.");closeOv(pasteOv);return}
+  save();closeOv(pasteOv);document.getElementById("pasteText").value="";renderAll();
+  const msg=added+" action"+(added===1?"":"s")+(noteAdded?" and 1 note":"")+" imported"
+    +(dupes?" · "+dupes+" duplicate"+(dupes===1?"":"s")+" skipped":"");
+  if(removedPrep){
+    toastUndo(msg+" · prep note closed",()=>{
+      notesState.splice(Math.min(removedPrepAt,notesState.length),0,removedPrep);
+      save();renderAll();toast("Prep note restored.");
+    });
+  } else toast(msg);
+}
+document.getElementById("btnPrimary").onclick=async()=>{
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    try{return importRaw(await navigator.clipboard.readText(),true)}catch(e){}
+  }
+  openOv(pasteOv);
+  document.getElementById("pasteHint").textContent="Your browser blocks clipboard access from a local file. Paste it here.";
+  document.getElementById("pasteText").focus();
+};
+document.getElementById("pasteGo").onclick=()=>importRaw(document.getElementById("pasteText").value,false);
+document.getElementById("pasteCancel").onclick=()=>closeOv(pasteOv);
+
+/* ---------- menu ---------- */
+function closeMenus(){
+  document.querySelectorAll(".menu").forEach(m=>m.classList.remove("open"));
+  ["btnMenu","btnAdd"].forEach(id=>{const b=document.getElementById(id);if(b)b.setAttribute("aria-expanded","false")});
+}
+function toggleMenu(btnId,menuId,onOpen){
+  const m=document.getElementById(menuId),wasOpen=m.classList.contains("open");
+  closeMenus();
+  if(!wasOpen){m.classList.add("open");
+    document.getElementById(btnId).setAttribute("aria-expanded","true");
+    if(onOpen)onOpen()}
+}
+document.getElementById("btnMenu").onclick=e=>{e.stopPropagation();toggleMenu("btnMenu","menu",renderBackupState)};
+document.getElementById("btnAdd").onclick=e=>{e.stopPropagation();toggleMenu("btnAdd","addMenu")};
+document.getElementById("mNew").onclick=()=>openAct(null);
+document.getElementById("mNewPrep").onclick=()=>openNote(null,true);
+document.getElementById("mNewNote").onclick=()=>openNote(null);
+document.getElementById("mManual").onclick=()=>{openOv(pasteOv);
+  document.getElementById("pasteHint").textContent="Paste the whole block, braces included.";
+  document.getElementById("pasteText").focus()};
+
+function download(name,text,type){
+  const url=URL.createObjectURL(new Blob([text],{type}));
+  const a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+}
+function backupAgeHours(){
+  const ts=Number(localStorage.getItem(BACKUP_KEY)||0);
+  return ts?(Date.now()-ts)/3600000:Infinity;
+}
+function ageLabel(){
+  const h=backupAgeHours();
+  if(h===Infinity)return "never backed up";
+  if(h<1)return "backed up just now";
+  if(h<24)return "backed up "+Math.floor(h)+"h ago";
+  const d=Math.floor(h/24);
+  return "last backup "+d+" day"+(d>1?"s":"")+" ago";
+}
+function renderBackupState(){
+  const btn=document.getElementById("btnSave");
+  const empty=!state.length&&!notesState.length;
+  btn.classList.toggle("empty",empty);
+  const stale=!empty&&backupAgeHours()>=24;
+  btn.classList.toggle("overdue",stale);
+  btn.title=empty?"Nothing to back up yet"
+    :(stale?"Save a backup — "+ageLabel():"Save a backup ("+ageLabel()+")");
+  const el=document.getElementById("backupNote");
+  if(el){
+    el.textContent=empty?"":(backupAgeHours()===Infinity
+      ? "Never backed up. Your data lives only in this browser."
+      : ageLabel().charAt(0).toUpperCase()+ageLabel().slice(1)+".");
+    el.style.color=stale?"var(--red)":"var(--ink-3)";
+  }
+}
+function saveBackup(){
+  download("meeting-hub-"+new Date().toISOString().slice(0,10)+".json",
+    JSON.stringify({actions:state,notes:notesState,groups:groupsState},null,2),"application/json");
+  localStorage.setItem(BACKUP_KEY,String(Date.now()));
+  renderBackupState();
+  toast("Backup downloaded. Move it to your backup folder.");
+}
+document.getElementById("btnSave").onclick=saveBackup;
+document.getElementById("mSaveJson").onclick=saveBackup;
+document.getElementById("mExportMd").onclick=()=>{
+  const L=["# Meeting notes","","_Exported "+new Date().toISOString().slice(0,10)+"_",""];
+  notesState.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")).forEach(n=>{
+    L.push("## "+(n.meeting||"No subject")+(n.date?" — "+n.date:""));
+    const p=notePeople(n);if(p.length)L.push("**With:** "+p.join(", "));
+    L.push("");noteBullets(n).forEach(b=>{
+      const p=parseBullet(b); if(!p.text)return;
+      if(p.head){L.push("","**"+p.text+"**","")}
+      else L.push("  ".repeat(p.depth)+"- "+p.text);
+    });L.push("");
+  });
+  if(!notesState.length)L.push("_No notes recorded._","");
+  L.push("---","","# Actions","");
+  [["todo","To do"],["doing","In progress"],["done","Done"]].forEach(([c,label])=>{
+    const it=state.filter(a=>a.col===c);if(!it.length)return;
+    L.push("## "+label,"");
+    it.forEach(a=>{const b=[a.owner||"no owner"];if(a.due)b.push("due "+a.due);
+      if(a.meeting)b.push(a.meeting);if(a.confirm)b.push("TO CONFIRM");
+      L.push("- **"+a.summary+"** — "+b.join(" · "));if(a.detail)L.push("  - "+a.detail)});
+    L.push("");
+  });
+  download("meeting-notes-"+new Date().toISOString().slice(0,10)+".md",L.join("\n"),"text/markdown");
+  toast("Markdown exported — readable without this tool.");
+};
+document.getElementById("mRestore").onclick=()=>{
+  const inp=document.createElement("input");inp.type="file";inp.accept=".json,application/json";
+  inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{
+      const d=JSON.parse(r.result);
+      const acts=Array.isArray(d)?d:(d.actions||[]),nts=Array.isArray(d)?[]:(d.notes||[]),
+            grps=Array.isArray(d)?[]:(d.groups||[]);
+      if(!Array.isArray(acts))throw 0;
+      if(!confirm("Replace everything currently here ("+state.length+" actions, "+notesState.length+" notes) with this file ("+acts.length+" actions, "+nts.length+" notes)?"))return;
+      state=acts.map(a=>Object.assign({summary:a.summary||a.action||"",detail:a.detail||a.note||""},a));
+      notesState=nts;groupsState=grps;save();renderAll();toast("Restored.");
+    }catch(e){toast("Could not read that backup file.")}};
+    r.readAsText(f)};
+  inp.click();
+};
+
+/* ---------- search wiring ---------- */
+const qEl=document.getElementById("q");
+function setQuery(v){query=String(v||"").trim().toLowerCase();qEl.value=v||"";
+  document.getElementById("searchWrap").classList.toggle("filled",!!query)}
+qEl.addEventListener("input",()=>{setQuery(qEl.value);renderAll()});
+document.getElementById("qClear").onclick=()=>{setQuery("");renderAll();qEl.focus()};
+
+/* ---------- render all ---------- */
+function renderAll(){renderStrip();renderBackupState();if(tab==="actions")renderBoard();else renderNotes()}
+
+/* migrate */
+state.forEach(a=>{if(!a.summary){a.summary=oneLine(a.action||"",140);a.detail=a.detail||a.note||""}});
+notesState.forEach(n=>{if(!Array.isArray(n.bullets))n.bullets=noteBullets(n)});
+save();
+renderAll();
+</script>
+</body>
+</html>
