@@ -313,6 +313,9 @@
     <div class="menu-wrap">
       <button class="btn quiet" id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="More">⋯</button>
       <div class="menu" id="menu">
+        <button id="mDataFile">Connect a data file…</button>
+        <div class="note" id="dataFileNote"></div>
+        <div class="sep"></div>
         <button id="mManual">Paste manually…</button>
         <div class="sep"></div>
         <button id="mSaveJson">Save backup (.json)</button>
@@ -417,11 +420,106 @@ const COLS=["todo","doing","done"];
 let state=load(KEY), notesState=load(NOTES_KEY), groupsState=load(GROUPS_KEY);
 let tab="actions", query="", activePerson="", activeSubject="", activeGroup="", openCard=null,
     editing=null, editingNote=null, dragId=null, dragSubject=null, linkNoteId=null;
+let fileHandle=null, fileName="", fsSaveTimer=null, fsSaving=false, pendingHandle=null;
+const IDB_DB="meeting-hub-fs", IDB_STORE="handles", IDB_KEY="dataFile";
 
 function load(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):[]}catch(e){return[]}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(NOTES_KEY,JSON.stringify(notesState));
-  localStorage.setItem(GROUPS_KEY,JSON.stringify(groupsState))}
-  catch(e){toast("Could not save. Export a backup now.")}}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(NOTES_KEY,JSON.stringify(notesState));
+    localStorage.setItem(GROUPS_KEY,JSON.stringify(groupsState))}
+  catch(e){if(!fileHandle)toast("Could not save to the browser. Connect a data file or export a backup.")}
+  scheduleFsWrite();
+}
+
+/* ---------- local file storage (File System Access API) ---------- */
+function storageSupported(){return typeof window!=="undefined" && !!window.showSaveFilePicker}
+function snapshot(){return {actions:state,notes:notesState,groups:groupsState}}
+function hydrate(d){
+  if(!d)return;
+  if(Array.isArray(d)){state=d;notesState=[];groupsState=[];return}
+  state=Array.isArray(d.actions)?d.actions:[];
+  notesState=Array.isArray(d.notes)?d.notes:[];
+  groupsState=Array.isArray(d.groups)?d.groups:[];
+}
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_DB,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function idbGet(k){return idb().then(db=>new Promise((res,rej)=>{
+  const t=db.transaction(IDB_STORE,"readonly").objectStore(IDB_STORE).get(k);
+  t.onsuccess=()=>res(t.result);t.onerror=()=>rej(t.error)}))}
+function idbSet(k,v){return idb().then(db=>new Promise((res,rej)=>{
+  const tx=db.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).put(v,k);
+  tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)}))}
+async function fsWrite(){
+  if(!fileHandle)return;
+  try{fsSaving=true;
+    const w=await fileHandle.createWritable();
+    await w.write(JSON.stringify(snapshot(),null,2));
+    await w.close();
+    try{localStorage.setItem(BACKUP_KEY,String(Date.now()))}catch(e){}
+  }catch(e){toast("Could not write the data file — is it still accessible?")}
+  finally{fsSaving=false}
+}
+function scheduleFsWrite(){if(!fileHandle)return;clearTimeout(fsSaveTimer);fsSaveTimer=setTimeout(fsWrite,600)}
+async function connectDataFile(){
+  if(!storageSupported()){toast("Not available here. Open the app over https (GitHub Pages) or localhost in Chrome or Edge.");return}
+  try{
+    const h=await window.showSaveFilePicker({suggestedName:"meeting-hub.json",
+      types:[{description:"Meeting Hub data",accept:{"application/json":[".json"]}}]});
+    const f=await h.getFile();const txt=(await f.text()).trim();
+    let loaded=false;
+    if(txt){loaded=confirm("This file already contains data.\n\nOK = load it into the app (replaces the current in-app data).\nCancel = keep the current data and overwrite the file.");
+      if(loaded){try{hydrate(JSON.parse(txt));migrate()}catch(e){toast("That file isn't valid Meeting Hub JSON.");return}}}
+    fileHandle=h;fileName=h.name;pendingHandle=null;
+    await idbSet(IDB_KEY,h);
+    await fsWrite();
+    save();renderAll();closeMenus();
+    toast(loaded?("Loaded — auto-saving to "+fileName+" from now on."):("Connected — auto-saving to "+fileName+"."));
+  }catch(e){if(e&&e.name==="AbortError")return;toast("Could not connect the data file.")}
+}
+async function grantPending(){
+  if(!pendingHandle)return;
+  try{
+    if(await pendingHandle.requestPermission({mode:"readwrite"})!=="granted"){toast("Permission not granted.");return}
+    fileHandle=pendingHandle;fileName=pendingHandle.name;pendingHandle=null;
+    const f=await fileHandle.getFile();const txt=(await f.text()).trim();
+    if(txt){try{hydrate(JSON.parse(txt));migrate()}catch(e){}}
+    save();renderAll();closeMenus();
+    toast("Reconnected — auto-saving to "+fileName+".");
+  }catch(e){toast("Could not reconnect the data file.")}
+}
+async function initStorage(){
+  if(!storageSupported())return;
+  try{
+    const h=await idbGet(IDB_KEY);
+    if(!h)return;
+    if(await h.queryPermission({mode:"readwrite"})==="granted"){
+      fileHandle=h;fileName=h.name;
+      const f=await h.getFile();const txt=(await f.text()).trim();
+      if(txt){hydrate(JSON.parse(txt));migrate()}
+      renderAll();
+    }else{pendingHandle=h;renderAll();
+      toast("Data file linked — open the ⋯ menu and click “Reconnect data file” to resume auto-save.");}
+  }catch(e){/* stay on browser storage */}
+}
+function updateStorageUI(){
+  const btn=document.getElementById("mDataFile"),note=document.getElementById("dataFileNote");
+  const ok=storageSupported();
+  if(btn){
+    btn.textContent = !ok?"Data file — needs https/localhost"
+      : fileHandle?("Data file: "+fileName+" ✓")
+      : pendingHandle?"Reconnect data file…":"Connect a data file…";
+    btn.disabled=!ok; btn.style.opacity=ok?"":"0.55";
+  }
+  if(note){
+    note.textContent = !ok
+      ? "Open the app via GitHub Pages (https) or localhost in Chrome/Edge to save to a real file on disk."
+      : fileHandle ? "Auto-saving to this file. Clearing the browser cache won’t affect it."
+      : pendingHandle ? "A data file is linked — click above to resume auto-save."
+      : "Not linked — your data currently lives only in this browser.";
+    note.style.color = (ok&&pendingHandle&&!fileHandle)?"var(--amber)":"var(--ink-3)";
+  }
+}
 function toast(m){const t=document.getElementById("toast");t.innerHTML="";t.style.pointerEvents="none";
   t.appendChild(document.createTextNode(m));t.classList.add("show");
   clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2800)}
@@ -1095,6 +1193,10 @@ document.getElementById("mNewNote").onclick=()=>openNote(null);
 document.getElementById("mManual").onclick=()=>{openOv(pasteOv);
   document.getElementById("pasteHint").textContent="Paste the whole block, braces included.";
   document.getElementById("pasteText").focus()};
+document.getElementById("mDataFile").onclick=()=>{
+  if(pendingHandle&&!fileHandle){grantPending();return}
+  connectDataFile();
+};
 
 function download(name,text,type){
   const url=URL.createObjectURL(new Blob([text],{type}));
@@ -1116,7 +1218,7 @@ function renderBackupState(){
   const btn=document.getElementById("btnSave");
   const empty=!state.length&&!notesState.length;
   btn.classList.toggle("empty",empty);
-  const stale=!empty&&backupAgeHours()>=24;
+  const stale=!empty&&!fileHandle&&backupAgeHours()>=24;
   btn.classList.toggle("overdue",stale);
   btn.title=empty?"Nothing to back up yet"
     :(stale?"Save a backup — "+ageLabel():"Save a backup ("+ageLabel()+")");
@@ -1185,12 +1287,16 @@ qEl.addEventListener("input",()=>{setQuery(qEl.value);renderAll()});
 document.getElementById("qClear").onclick=()=>{setQuery("");renderAll();qEl.focus()};
 
 /* ---------- render all ---------- */
-function renderAll(){renderStrip();renderBackupState();if(tab==="actions")renderBoard();else renderNotes()}
+function renderAll(){renderStrip();renderBackupState();updateStorageUI();if(tab==="actions")renderBoard();else renderNotes()}
 
 /* migrate */
-state.forEach(a=>{if(!a.summary){a.summary=oneLine(a.action||"",140);a.detail=a.detail||a.note||""}});
-notesState.forEach(n=>{if(!Array.isArray(n.bullets))n.bullets=noteBullets(n)});
+function migrate(){
+  state.forEach(a=>{if(!a.summary){a.summary=oneLine(a.action||"",140);a.detail=a.detail||a.note||""}});
+  notesState.forEach(n=>{if(!Array.isArray(n.bullets))n.bullets=noteBullets(n)});
+}
+migrate();
 save();
+initStorage();
 renderAll();
 </script>
 </body>
