@@ -420,19 +420,20 @@ const COLS=["todo","doing","done"];
 let state=load(KEY), notesState=load(NOTES_KEY), groupsState=load(GROUPS_KEY);
 let tab="actions", query="", activePerson="", activeSubject="", activeGroup="", openCard=null,
     editing=null, editingNote=null, dragId=null, dragSubject=null, linkNoteId=null;
-let fileHandle=null, fileName="", fsSaveTimer=null, fsSaving=false, pendingHandle=null;
-const IDB_DB="meeting-hub-fs", IDB_STORE="handles", IDB_KEY="dataFile";
+let dirHandle=null, dirName="", dataHandle=null, fsSaveTimer=null, fsSaving=false, pendingHandle=null, inboxTimer=null;
+const IDB_DB="meeting-hub-fs", IDB_STORE="handles", IDB_KEY="dataDir";
 
 function load(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):[]}catch(e){return[]}}
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(NOTES_KEY,JSON.stringify(notesState));
     localStorage.setItem(GROUPS_KEY,JSON.stringify(groupsState))}
-  catch(e){if(!fileHandle)toast("Could not save to the browser. Connect a data file or export a backup.")}
+  catch(e){if(!dirHandle)toast("Could not save to the browser. Connect a data folder or export a backup.")}
   scheduleFsWrite();
 }
 
-/* ---------- local file storage (File System Access API) ---------- */
-function storageSupported(){return typeof window!=="undefined" && !!window.showSaveFilePicker}
+/* ---------- local folder storage + auto-import (File System Access API) ---------- */
+const DATA_FILE="meeting-hub.json", INBOX_FILE="meeting-hub-inbox.json";
+function storageSupported(){return typeof window!=="undefined" && !!window.showDirectoryPicker}
 function snapshot(){return {actions:state,notes:notesState,groups:groupsState}}
 function hydrate(d){
   if(!d)return;
@@ -450,43 +451,71 @@ function idbGet(k){return idb().then(db=>new Promise((res,rej)=>{
 function idbSet(k,v){return idb().then(db=>new Promise((res,rej)=>{
   const tx=db.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).put(v,k);
   tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)}))}
+async function getDataHandle(create){
+  if(!dirHandle)return null;
+  if(!dataHandle)dataHandle=await dirHandle.getFileHandle(DATA_FILE,{create:!!create});
+  return dataHandle;
+}
 async function fsWrite(){
-  if(!fileHandle)return;
+  if(!dirHandle)return;
   try{fsSaving=true;
-    const w=await fileHandle.createWritable();
+    const h=await getDataHandle(true);
+    const w=await h.createWritable();
     await w.write(JSON.stringify(snapshot(),null,2));
     await w.close();
     try{localStorage.setItem(BACKUP_KEY,String(Date.now()))}catch(e){}
-  }catch(e){toast("Could not write the data file — is it still accessible?")}
+  }catch(e){toast("Could not write the data file — is the folder still accessible?")}
   finally{fsSaving=false}
 }
-function scheduleFsWrite(){if(!fileHandle)return;clearTimeout(fsSaveTimer);fsSaveTimer=setTimeout(fsWrite,600)}
-async function connectDataFile(){
-  if(!storageSupported()){toast("Not available here. Open the app over https (GitHub Pages) or localhost in Chrome or Edge.");return}
+function scheduleFsWrite(){if(!dirHandle)return;clearTimeout(fsSaveTimer);fsSaveTimer=setTimeout(fsWrite,600)}
+async function readData(){
+  try{const h=await getDataHandle(false);const f=await h.getFile();return (await f.text()).trim()}
+  catch(e){return ""}   /* meeting-hub.json may not exist yet */
+}
+/* watch meeting-hub-inbox.json — Claude drops a meeting there, we import + clear it */
+async function consumeInbox(){
+  if(!dirHandle)return;
+  let ih;
+  try{ih=await dirHandle.getFileHandle(INBOX_FILE,{create:false})}catch(e){return}
+  let txt;
+  try{txt=(await (await ih.getFile()).text()).trim()}catch(e){return}
+  if(!txt)return;
+  try{JSON.parse(txt)}catch(e){return}      /* half-written file — retry next tick */
+  importRaw(txt,false);                       /* normal merge / dedupe / prep-close + toast */
+  try{const w=await ih.createWritable();await w.write("");await w.close()}catch(e){}
+}
+function startInboxWatch(){clearInterval(inboxTimer);inboxTimer=setInterval(consumeInbox,3500)}
+async function connectDataFolder(){
+  if(!storageSupported()){toast("Not available here. Open the app via GitHub Pages (https) in Chrome or Edge.");return}
   try{
-    const h=await window.showSaveFilePicker({suggestedName:"meeting-hub.json",
-      types:[{description:"Meeting Hub data",accept:{"application/json":[".json"]}}]});
-    const f=await h.getFile();const txt=(await f.text()).trim();
-    let loaded=false;
-    if(txt){loaded=confirm("This file already contains data.\n\nOK = load it into the app (replaces the current in-app data).\nCancel = keep the current data and overwrite the file.");
-      if(loaded){try{hydrate(JSON.parse(txt));migrate()}catch(e){toast("That file isn't valid Meeting Hub JSON.");return}}}
-    fileHandle=h;fileName=h.name;pendingHandle=null;
+    const h=await window.showDirectoryPicker({mode:"readwrite"});
+    dirHandle=h;dirName=h.name;dataHandle=null;pendingHandle=null;
     await idbSet(IDB_KEY,h);
+    const txt=await readData();
+    if(txt){
+      if(confirm("A "+DATA_FILE+" already exists in this folder.\n\nOK = load it into the app.\nCancel = keep the current in-app data and overwrite the file.")){
+        try{hydrate(JSON.parse(txt));migrate()}catch(e){toast(DATA_FILE+" isn't valid — keeping current data.")}
+      }
+    }
     await fsWrite();
+    await consumeInbox();
+    startInboxWatch();
     save();renderAll();closeMenus();
-    toast(loaded?("Loaded — auto-saving to "+fileName+" from now on."):("Connected — auto-saving to "+fileName+"."));
-  }catch(e){if(e&&e.name==="AbortError")return;toast("Could not connect the data file.")}
+    toast("Connected to “"+dirName+"”. Auto-save + auto-import are on.");
+  }catch(e){if(e&&e.name==="AbortError")return;toast("Could not connect the folder.")}
 }
 async function grantPending(){
   if(!pendingHandle)return;
   try{
     if(await pendingHandle.requestPermission({mode:"readwrite"})!=="granted"){toast("Permission not granted.");return}
-    fileHandle=pendingHandle;fileName=pendingHandle.name;pendingHandle=null;
-    const f=await fileHandle.getFile();const txt=(await f.text()).trim();
+    dirHandle=pendingHandle;dirName=pendingHandle.name;dataHandle=null;pendingHandle=null;
+    const txt=await readData();
     if(txt){try{hydrate(JSON.parse(txt));migrate()}catch(e){}}
+    await consumeInbox();
+    startInboxWatch();
     save();renderAll();closeMenus();
-    toast("Reconnected — auto-saving to "+fileName+".");
-  }catch(e){toast("Could not reconnect the data file.")}
+    toast("Reconnected to “"+dirName+"”. Auto-save + auto-import are on.");
+  }catch(e){toast("Could not reconnect the folder.")}
 }
 async function initStorage(){
   if(!storageSupported())return;
@@ -494,30 +523,32 @@ async function initStorage(){
     const h=await idbGet(IDB_KEY);
     if(!h)return;
     if(await h.queryPermission({mode:"readwrite"})==="granted"){
-      fileHandle=h;fileName=h.name;
-      const f=await h.getFile();const txt=(await f.text()).trim();
+      dirHandle=h;dirName=h.name;dataHandle=null;
+      const txt=await readData();
       if(txt){hydrate(JSON.parse(txt));migrate()}
+      await consumeInbox();
+      startInboxWatch();
       renderAll();
     }else{pendingHandle=h;renderAll();
-      toast("Data file linked — open the ⋯ menu and click “Reconnect data file” to resume auto-save.");}
+      toast("Folder linked — open the ⋯ menu and click “Reconnect folder” to resume auto-save/import.");}
   }catch(e){/* stay on browser storage */}
 }
 function updateStorageUI(){
   const btn=document.getElementById("mDataFile"),note=document.getElementById("dataFileNote");
   const ok=storageSupported();
   if(btn){
-    btn.textContent = !ok?"Data file — needs https/localhost"
-      : fileHandle?("Data file: "+fileName+" ✓")
-      : pendingHandle?"Reconnect data file…":"Connect a data file…";
+    btn.textContent = !ok?"Data folder — needs https"
+      : dirHandle?("Folder: "+dirName+" ✓")
+      : pendingHandle?"Reconnect folder…":"Connect a data folder…";
     btn.disabled=!ok; btn.style.opacity=ok?"":"0.55";
   }
   if(note){
     note.textContent = !ok
-      ? "Open the app via GitHub Pages (https) or localhost in Chrome/Edge to save to a real file on disk."
-      : fileHandle ? "Auto-saving to this file. Clearing the browser cache won’t affect it."
-      : pendingHandle ? "A data file is linked — click above to resume auto-save."
+      ? "Open the app via GitHub Pages (https) in Chrome/Edge to save to a real folder on disk."
+      : dirHandle ? "Auto-saving to "+DATA_FILE+", and auto-importing meetings dropped in this folder."
+      : pendingHandle ? "A folder is linked — click above to resume auto-save/import."
       : "Not linked — your data currently lives only in this browser.";
-    note.style.color = (ok&&pendingHandle&&!fileHandle)?"var(--amber)":"var(--ink-3)";
+    note.style.color = (ok&&pendingHandle&&!dirHandle)?"var(--amber)":"var(--ink-3)";
   }
 }
 function toast(m){const t=document.getElementById("toast");t.innerHTML="";t.style.pointerEvents="none";
@@ -689,13 +720,15 @@ function cardHTML(a){
     :'<div class="detail"><em style="color:var(--ink-3)">No detail recorded.</em></div>';
   const left=a.col!=="todo"?'<button class="btn quiet tiny" data-move="'+a.id+'" data-dir="-1">← Back</button>':"";
   const right=a.col!=="done"?'<button class="btn quiet tiny" data-move="'+a.id+'" data-dir="1">Forward →</button>':"";
+  const isFirst=state.find(x=>x.col===a.col)?.id===a.id;
+  const top=!isFirst?'<button class="btn quiet tiny" data-top="'+a.id+'" title="Move to top of this list">↑ Top</button>':"";
   return '<article class="card'+(a.confirm?" flagged":"")+(openCard===a.id?" open":"")
     +'" draggable="true" data-id="'+a.id+'" tabindex="0">'
     +'<button class="del" data-del="'+a.id+'" aria-label="Delete this action" title="Delete">×</button>'
     +'<div class="summary">'+hl(a.summary)+'</div>'
     +'<div class="row2">'+who+(when?'<span style="color:var(--line)">·</span>'+when:"")+(src?'<span class="sp"></span>'+src:"")+'</div>'
     +conf+det
-    +'<div class="cardacts">'+left+right+'<span class="sp"></span>'
+    +'<div class="cardacts">'+left+right+top+'<span class="sp"></span>'
     +'<button class="btn quiet tiny" data-edit="'+a.id+'">Edit</button></div></article>';
 }
 
@@ -742,6 +775,9 @@ document.addEventListener("click",e=>{
   if(!b){closeMenus();return}
   if(b.dataset.move){const a=state.find(x=>x.id===b.dataset.move);
     dropCard(a.id,COLS[Math.min(2,Math.max(0,COLS.indexOf(a.col)+ +b.dataset.dir))],null)}
+  if(b.dataset.top){const a=state.find(x=>x.id===b.dataset.top);
+    const first=state.find(x=>x.col===a.col);
+    if(a&&first&&first.id!==a.id)dropCard(a.id,a.col,first.id)}
   if(b.dataset.confirm){const a=state.find(x=>x.id===b.dataset.confirm);
     a.confirm=false;save();renderAll();toast("Confirmed.")}
   if(b.dataset.edit)openAct(b.dataset.edit);
@@ -1194,8 +1230,8 @@ document.getElementById("mManual").onclick=()=>{openOv(pasteOv);
   document.getElementById("pasteHint").textContent="Paste the whole block, braces included.";
   document.getElementById("pasteText").focus()};
 document.getElementById("mDataFile").onclick=()=>{
-  if(pendingHandle&&!fileHandle){grantPending();return}
-  connectDataFile();
+  if(pendingHandle&&!dirHandle){grantPending();return}
+  connectDataFolder();
 };
 
 function download(name,text,type){
@@ -1218,7 +1254,7 @@ function renderBackupState(){
   const btn=document.getElementById("btnSave");
   const empty=!state.length&&!notesState.length;
   btn.classList.toggle("empty",empty);
-  const stale=!empty&&!fileHandle&&backupAgeHours()>=24;
+  const stale=!empty&&!dirHandle&&backupAgeHours()>=24;
   btn.classList.toggle("overdue",stale);
   btn.title=empty?"Nothing to back up yet"
     :(stale?"Save a backup — "+ageLabel():"Save a backup ("+ageLabel()+")");
