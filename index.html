@@ -260,6 +260,13 @@
     align-items:center;justify-content:center;padding:4vh 4vw;cursor:zoom-out}
   .imgov.open{display:flex}
   .imgov img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  #archiveList{max-height:52vh;overflow:auto;margin:-2px 0 4px}
+  .arch-row{display:flex;align-items:center;gap:9px;padding:9px 2px;border-bottom:1px solid var(--line-2)}
+  .arch-row:last-child{border-bottom:0}
+  .arch-main{flex:1;min-width:0}
+  .arch-sum{font-weight:550;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .arch-sub{font-size:12px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .arch-empty{color:var(--ink-3);font-size:13px;padding:16px 2px;font-style:italic}
 
   /* ---------- modal ---------- */
   .ov{display:none;position:fixed;inset:0;background:rgba(20,24,32,.34);backdrop-filter:blur(2px);z-index:60;
@@ -344,6 +351,8 @@
         <button id="mSaveJson">Save backup (.json)</button>
         <button id="mExportMd">Export notes (.md)</button>
         <button id="mRestore">Restore from file…</button>
+        <div class="sep"></div>
+        <button id="mArchived">Archived actions</button>
         <div class="note" id="backupNote"></div>
         <div class="sep"></div>
         <div class="note" id="verNote"></div>
@@ -443,12 +452,21 @@
   </div>
 </div>
 
+<div class="ov" id="archiveOv">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3>Archived actions</h3>
+    <div class="f"><span class="hint">Actions are archived automatically 24h after they reach Done. They stay in your data file and can be restored here.</span></div>
+    <div id="archiveList"></div>
+    <div class="macts"><button class="btn quiet" id="archiveClose">Close</button></div>
+  </div>
+</div>
+
 <div class="imgov" id="imgOv"><img id="imgOvImg" alt=""></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="0.5.0";
+const APP_VERSION="0.6.0";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1";
 const COLS=["todo","doing","done"];
@@ -570,6 +588,9 @@ async function initStorage(){
   }catch(e){/* stay on browser storage */}
 }
 function updateStorageUI(){
+  const am=document.getElementById("mArchived");
+  if(am){const n=state.filter(a=>a.archived).length;
+    am.textContent=n?("Archived actions ("+n+")"):"Archived actions";am.style.display=n?"":"none"}
   const btn=document.getElementById("mDataFile"),note=document.getElementById("dataFileNote");
   const ok=storageSupported();
   if(btn){
@@ -706,7 +727,7 @@ function linkedActions(n){
   state.forEach(a=>{
     const linked=a.noteId===n.id||(Array.isArray(n.actionIds)&&n.actionIds.includes(a.id));
     const sameMeeting=n.meeting&&a.meeting===n.meeting;
-    if((linked||sameMeeting)&&!seen.has(a.id)){seen.add(a.id);out.push(a)}
+    if((linked||sameMeeting)&&!a.archived&&!seen.has(a.id)){seen.add(a.id);out.push(a)}
   });
   return out;
 }
@@ -799,7 +820,7 @@ function renderBoard(){
   zero.innerHTML=""; board.style.display="";
   COLS.forEach(col=>{
     const box=document.querySelector('.drop[data-col="'+col+'"]');
-    const all=state.filter(a=>a.col===col);
+    const all=state.filter(a=>a.col===col&&!a.archived);
     const items=all.filter(matchA).filter(a=>!focusOnly||a.focus);
     document.getElementById("c-"+col).textContent=(focusOnly||query)?items.length:all.length;
     box.innerHTML = items.length ? items.map(cardHTML).join("")
@@ -863,6 +884,7 @@ function dropCard(id,col,beforeId){
   const a=state[i];
   if(col==="done"&&a.confirm){toast("Confirm this action first — it came from an uncertain note.");return}
   state.splice(i,1);a.col=col;
+  if(col==="done"){if(!a.doneAt)a.doneAt=Date.now()} else {a.doneAt=0;a.archived=false}
   let at;
   if(beforeId){at=state.findIndex(x=>x.id===beforeId);if(at<0)at=state.length}
   else{const last=[...state].reverse().find(x=>x.col===col);at=last?state.indexOf(last)+1:state.length}
@@ -1126,10 +1148,11 @@ function noteCardHTML(n,isPrep){
 /* ---------- modals ---------- */
 function openOv(o){o.classList.add("open")}
 function closeOv(o){o.classList.remove("open")}
-const actOv=document.getElementById("actOv"), noteOv=document.getElementById("noteOv"), pasteOv=document.getElementById("pasteOv");
-[actOv,noteOv,pasteOv].forEach(o=>o.addEventListener("click",e=>{if(e.target===o)closeOv(o)}));
+const actOv=document.getElementById("actOv"), noteOv=document.getElementById("noteOv"), pasteOv=document.getElementById("pasteOv"), archiveOv=document.getElementById("archiveOv");
+[actOv,noteOv,pasteOv,archiveOv].forEach(o=>o.addEventListener("click",e=>{if(e.target===o)closeOv(o)}));
+document.getElementById("archiveClose").onclick=()=>closeOv(archiveOv);
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){[actOv,noteOv,pasteOv].forEach(closeOv);document.getElementById("imgOv").classList.remove("open");closeMenus()}
+  if(e.key==="Escape"){[actOv,noteOv,pasteOv,archiveOv].forEach(closeOv);document.getElementById("imgOv").classList.remove("open");closeMenus()}
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();document.getElementById("q").focus()}
 });
 
@@ -1349,6 +1372,29 @@ document.getElementById("btnNewPrep").onclick=()=>openNote(null,true);
 document.getElementById("mManual").onclick=()=>{openOv(pasteOv);
   document.getElementById("pasteHint").textContent="Paste the whole block, braces included.";
   document.getElementById("pasteText").focus()};
+function fmtAgo(ts){
+  if(!ts)return "";
+  const h=(Date.now()-ts)/3600000;
+  if(h<1)return "just now";
+  if(h<24)return Math.floor(h)+"h ago";
+  const d=Math.floor(h/24);return d+" day"+(d>1?"s":"")+" ago";
+}
+function renderArchive(){
+  const box=document.getElementById("archiveList");
+  const arch=state.filter(a=>a.archived).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  if(!arch.length){box.innerHTML='<div class="arch-empty">Nothing archived yet.</div>';return}
+  box.innerHTML=arch.map(a=>'<div class="arch-row"><div class="arch-main">'
+    +'<div class="arch-sum">'+esc(a.summary)+'</div>'
+    +'<div class="arch-sub">'+esc([a.owner||"no owner",a.meeting||""].filter(Boolean).join(" · "))
+    +(a.doneAt?" · done "+fmtAgo(a.doneAt):"")+'</div></div>'
+    +'<button class="btn tiny" data-arestore="'+a.id+'">Restore</button>'
+    +'<button class="btn danger tiny" data-adelete="'+a.id+'">Delete</button></div>').join("");
+  box.querySelectorAll("[data-arestore]").forEach(b=>b.onclick=()=>{
+    const a=state.find(x=>x.id===b.dataset.arestore);
+    if(a){a.archived=false;a.doneAt=Date.now();save();renderAll();renderArchive();toast("Restored to Done.")}});
+  box.querySelectorAll("[data-adelete]").forEach(b=>b.onclick=()=>{deleteAction(b.dataset.adelete);renderArchive()});
+}
+document.getElementById("mArchived").onclick=()=>{closeMenus();openOv(archiveOv);renderArchive()};
 document.getElementById("mDataFile").onclick=()=>{
   if(pendingHandle&&!dirHandle){grantPending();return}
   connectDataFolder();
@@ -1438,7 +1484,17 @@ qEl.addEventListener("input",()=>{setQuery(qEl.value);renderAll()});
 document.getElementById("qClear").onclick=()=>{setQuery("");renderAll();qEl.focus()};
 
 /* ---------- render all ---------- */
-function renderAll(){renderStrip();renderBackupState();updateStorageUI();if(tab==="actions")renderBoard();else renderNotes()}
+function archiveOldDone(){
+  const now=Date.now(),DAY=86400000;let changed=false;
+  state.forEach(a=>{
+    if(a.col==="done"&&!a.archived){
+      if(!a.doneAt){a.doneAt=now;changed=true}            /* stamp existing Done cards → 24h grace */
+      else if(now-a.doneAt>=DAY){a.archived=true;changed=true}
+    }
+  });
+  return changed;
+}
+function renderAll(){if(archiveOldDone())save();renderStrip();renderBackupState();updateStorageUI();if(tab==="actions")renderBoard();else renderNotes()}
 
 /* migrate */
 function migrate(){
