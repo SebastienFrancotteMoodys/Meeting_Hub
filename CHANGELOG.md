@@ -3,6 +3,12 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v0.3.0 — 2026-08-28
+### Changed
+- **Kanban toolbar streamlined.** Removed "Paste from Claude" (superseded by the auto-import inbox) and the download button (backup now lives in the ⋯ menu).
+- **New items are now three dedicated toolbar icons**: New action, New note, New prep.
+- Refreshed empty-state guidance to the `capture` → `/close-meeting` → auto-import flow.
+
 ## v0.2.0 — 2026-08-28
 ### Added
 - **Note → Action**: turn any note line into a prefilled, bidirectionally-linked action (owner auto-detected).

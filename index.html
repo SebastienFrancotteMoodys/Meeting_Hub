@@ -311,24 +311,22 @@
       <button class="x" id="qClear" aria-label="Clear search">×</button>
     </div>
     <span class="sp"></span>
-    <button class="btn primary" id="btnPrimary">Paste from Claude</button>
-    <div class="menu-wrap">
-      <button class="iconbtn" id="btnAdd" aria-haspopup="true" aria-expanded="false" aria-label="Create">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-          stroke-width="1.9" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
-      </button>
-      <div class="menu" id="addMenu">
-        <button id="mNew">Action</button>
-        <button id="mNewNote">Note</button>
-        <button id="mNewPrep">Prep — upcoming meeting</button>
-      </div>
-    </div>
-    <button class="iconbtn" id="btnSave" aria-label="Save backup to your computer">
-      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+    <button class="iconbtn" id="btnNewAction" title="New action" aria-label="New action">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor"
         stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10 3v9"/><path d="M6.5 8.5 10 12l3.5-3.5"/><path d="M3.5 13.5v2a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-2"/>
-      </svg>
-      <span class="badge" id="saveBadge"></span>
+        <rect x="3" y="3" width="14" height="14" rx="3.5"/><path d="M10 7v6M7 10h6"/></svg>
+    </button>
+    <button class="iconbtn" id="btnNewNote" title="New note" aria-label="New note">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+        stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 3.5h5l4 4V16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/>
+        <path d="M11 3.5v4h4"/><path d="M7.5 11.5h5M7.5 13.8h4"/></svg>
+    </button>
+    <button class="iconbtn" id="btnNewPrep" title="New prep — upcoming meeting" aria-label="New prep">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+        stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3.5" y="4.5" width="13" height="12" rx="2"/><path d="M3.5 8.2h13"/>
+        <path d="M7 3v3M13 3v3"/></svg>
     </button>
     <div class="menu-wrap">
       <button class="btn quiet" id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="More">⋯</button>
@@ -445,7 +443,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="0.2.0";
+const APP_VERSION="0.3.0";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1";
 const COLS=["todo","doing","done"];
@@ -794,8 +792,8 @@ function renderBoard(){
     zero.innerHTML='<div class="zero"><h3>Nothing here yet</h3>'
       +'<p>This board fills itself from your meetings. Nothing to set up.</p>'
       +'<ol><li>In Claude, say <code>capture</code> and take your notes</li>'
-      +'<li>Say <code>fin de réunion</code> and answer the questions</li>'
-      +'<li>Copy the JSON block, then hit <b>Paste from Claude</b></li></ol>'
+      +'<li>Say <code>fin de réunion</code>, then <code>/close-meeting</code></li>'
+      +'<li>Your actions and notes appear here automatically</li></ol>'
       +'<button class="btn" id="zNew">Or add an action by hand</button></div>';
     document.getElementById("zNew").onclick=()=>openAct(null);
     return;
@@ -902,7 +900,7 @@ document.addEventListener("click",e=>{
   }
   if(b.dataset.src){activeSubject=b.dataset.src;activePerson="";setQuery("");setTab("notes")}
   if(b.dataset.toActions){activeSubject="";setQuery(b.dataset.toActions);setTab("actions")}
-  if(!b.closest(".menu")&&b.id!=="btnMenu"&&b.id!=="btnAdd")closeMenus();
+  if(!b.closest(".menu")&&b.id!=="btnMenu")closeMenus();
 });
 
 /* ---------- notes ---------- */
@@ -965,7 +963,7 @@ function renderNotes(){
   const box=document.getElementById("notecards");
   if(!notesState.length){
     box.innerHTML='<div class="zero"><h3>No notes yet</h3>'
-      +'<p>Notes arrive with your actions when you paste a meeting from Claude. People and subjects build themselves from there.</p>'
+      +'<p>Notes arrive with your actions when a meeting is imported from Claude. People and subjects build themselves from there.</p>'
       +'<button class="btn" id="zNote">Write one by hand</button></div>';
     document.getElementById("zNote").onclick=()=>openNote(null);
     return;
@@ -1328,21 +1326,13 @@ function importRaw(raw,viaClip){
     });
   } else toast(msg);
 }
-document.getElementById("btnPrimary").onclick=async()=>{
-  if(navigator.clipboard&&navigator.clipboard.readText){
-    try{return importRaw(await navigator.clipboard.readText(),true)}catch(e){}
-  }
-  openOv(pasteOv);
-  document.getElementById("pasteHint").textContent="Your browser blocks clipboard access from a local file. Paste it here.";
-  document.getElementById("pasteText").focus();
-};
 document.getElementById("pasteGo").onclick=()=>importRaw(document.getElementById("pasteText").value,false);
 document.getElementById("pasteCancel").onclick=()=>closeOv(pasteOv);
 
 /* ---------- menu ---------- */
 function closeMenus(){
   document.querySelectorAll(".menu").forEach(m=>m.classList.remove("open"));
-  ["btnMenu","btnAdd"].forEach(id=>{const b=document.getElementById(id);if(b)b.setAttribute("aria-expanded","false")});
+  ["btnMenu"].forEach(id=>{const b=document.getElementById(id);if(b)b.setAttribute("aria-expanded","false")});
 }
 function toggleMenu(btnId,menuId,onOpen){
   const m=document.getElementById(menuId),wasOpen=m.classList.contains("open");
@@ -1352,10 +1342,9 @@ function toggleMenu(btnId,menuId,onOpen){
     if(onOpen)onOpen()}
 }
 document.getElementById("btnMenu").onclick=e=>{e.stopPropagation();toggleMenu("btnMenu","menu",renderBackupState)};
-document.getElementById("btnAdd").onclick=e=>{e.stopPropagation();toggleMenu("btnAdd","addMenu")};
-document.getElementById("mNew").onclick=()=>openAct(null);
-document.getElementById("mNewPrep").onclick=()=>openNote(null,true);
-document.getElementById("mNewNote").onclick=()=>openNote(null);
+document.getElementById("btnNewAction").onclick=()=>openAct(null);
+document.getElementById("btnNewNote").onclick=()=>openNote(null);
+document.getElementById("btnNewPrep").onclick=()=>openNote(null,true);
 document.getElementById("mManual").onclick=()=>{openOv(pasteOv);
   document.getElementById("pasteHint").textContent="Paste the whole block, braces included.";
   document.getElementById("pasteText").focus()};
@@ -1381,18 +1370,14 @@ function ageLabel(){
   return "last backup "+d+" day"+(d>1?"s":"")+" ago";
 }
 function renderBackupState(){
-  const btn=document.getElementById("btnSave");
   const empty=!state.length&&!notesState.length;
-  btn.classList.toggle("empty",empty);
   const stale=!empty&&!dirHandle&&backupAgeHours()>=24;
-  btn.classList.toggle("overdue",stale);
-  btn.title=empty?"Nothing to back up yet"
-    :(stale?"Save a backup — "+ageLabel():"Save a backup ("+ageLabel()+")");
   const el=document.getElementById("backupNote");
   if(el){
-    el.textContent=empty?"":(backupAgeHours()===Infinity
-      ? "Never backed up. Your data lives only in this browser."
-      : ageLabel().charAt(0).toUpperCase()+ageLabel().slice(1)+".");
+    el.textContent=empty?"":(dirHandle?"Auto-saving to your data file."
+      :(backupAgeHours()===Infinity
+        ? "Never backed up. Your data lives only in this browser."
+        : ageLabel().charAt(0).toUpperCase()+ageLabel().slice(1)+"."));
     el.style.color=stale?"var(--red)":"var(--ink-3)";
   }
 }
@@ -1403,7 +1388,6 @@ function saveBackup(){
   renderBackupState();
   toast("Backup downloaded. Move it to your backup folder.");
 }
-document.getElementById("btnSave").onclick=saveBackup;
 document.getElementById("mSaveJson").onclick=saveBackup;
 document.getElementById("mExportMd").onclick=()=>{
   const L=["# Meeting notes","","_Exported "+new Date().toISOString().slice(0,10)+"_",""];
