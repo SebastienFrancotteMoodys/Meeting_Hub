@@ -342,6 +342,8 @@
         <button id="mExportMd">Export notes (.md)</button>
         <button id="mRestore">Restore from file…</button>
         <div class="note" id="backupNote"></div>
+        <div class="sep"></div>
+        <div class="note" id="verNote"></div>
       </div>
     </div>
   </div>
@@ -443,6 +445,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
+const APP_VERSION="0.2.0";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1";
 const COLS=["todo","doing","done"];
@@ -1461,6 +1464,7 @@ migrate();
 save();
 initStorage();
 renderAll();
+document.getElementById("verNote").textContent="Meeting Hub v"+APP_VERSION;
 </script>
 </body>
 </html>
