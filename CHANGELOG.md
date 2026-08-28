@@ -3,6 +3,10 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v0.5.0 — 2026-08-28
+### Changed
+- **Status strip decluttered**: removed the open / overdue / to-confirm counters. The strip now shows only the Focus chip and the active-search indicator.
+
 ## v0.4.0 — 2026-08-28
 ### Added
 - **Focus selection**: star any action to add it to your personal Focus list, and a **focus** chip in the status strip to show only your starred actions across all columns. Persistent (managed by hand).
