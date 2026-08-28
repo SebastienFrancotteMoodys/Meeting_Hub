@@ -673,6 +673,8 @@ function deleteAction(id){
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function fp(a){return (a.summary||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+(a.meeting||"").toLowerCase().trim()}
+/* base subject = everything before the first "-", trimmed/lowercased (so "X" merges with "X - detail") */
+function subjectKey(s){return String(s||"").split("-")[0].replace(/\s+/g," ").trim().toLowerCase()}
 function oneLine(s,n){s=String(s||"").replace(/\s+/g," ").trim();return s.length>n?s.slice(0,n-1)+"…":s}
 function trimEnd(s){return String(s??"").replace(/\s+$/,"")}
 function parseBullet(raw){
@@ -1058,8 +1060,8 @@ function niceDate(s){const d=dueInfo(s);if(!s)return"";const p=/^(\d{4})-(\d{2})
 /* live brief on a prep card: open actions on the subject + open questions from the last held meeting */
 function carryOverHTML(n){
   if(!n.meeting)return "";
-  const key=n.meeting.trim().toLowerCase();
-  const sameSubj=s=>String(s||"").trim().toLowerCase()===key;
+  const key=subjectKey(n.meeting);
+  const sameSubj=s=>subjectKey(s)===key;
   const openActs=state.filter(a=>a.col!=="done"&&sameSubj(a.meeting));
   const past=notesState.filter(m=>m.id!==n.id&&m.status!=="prep"&&sameSubj(m.meeting))
     .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
@@ -1299,8 +1301,10 @@ function importRaw(raw,viaClip){
     :String(data.content||"").split(/\n/).map(trimEnd).filter(Boolean);
   const ppl=Array.isArray(data.people)?data.people.map(p=>String(p).trim()).filter(Boolean):[];
   if(data.merge===true && meeting){
-    const i=notesState.findIndex(n=>n.status==="prep"
-      &&(n.meeting||"").trim().toLowerCase()===meeting.toLowerCase());
+    const em=meeting.trim().toLowerCase();
+    let i=notesState.findIndex(n=>n.status==="prep" && (n.meeting||"").trim().toLowerCase()===em);
+    if(i<0){const key=subjectKey(meeting);
+      i=notesState.findIndex(n=>n.status==="prep" && subjectKey(n.meeting)===key);}
     if(i>=0){removedPrepAt=i;removedPrep=notesState[i];notesState.splice(i,1)}
   }
   if(meeting||bullets.length||ppl.length){
