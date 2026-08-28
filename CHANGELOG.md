@@ -3,6 +3,10 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v0.4.0 — 2026-08-28
+### Added
+- **Focus selection**: star any action to add it to your personal Focus list, and a **focus** chip in the status strip to show only your starred actions across all columns. Persistent (managed by hand).
+
 ## v0.3.0 — 2026-08-28
 ### Changed
 - **Kanban toolbar streamlined.** Removed "Paste from Claude" (superseded by the auto-import inbox) and the download button (backup now lives in the ⋯ menu).
