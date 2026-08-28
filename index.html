@@ -25,7 +25,11 @@
   .sp{flex:1}
 
   /* ---------- top ---------- */
-  .top{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .focusbtn{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .focusbtn.on{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber)}
+  .focusbtn:disabled{opacity:.45;cursor:default;box-shadow:none}
+  .focusbtn .fstar{color:var(--amber);font-size:14px;line-height:1}
   .brand{font-size:16px;font-weight:640;letter-spacing:-.015em;white-space:nowrap}
   .segment{display:inline-flex;background:#E9EBEF;border-radius:9px;padding:2px}
   .seg{border:0;background:transparent;padding:5px 15px;border-radius:7px;font-size:13.5px;font-weight:550;
@@ -77,8 +81,8 @@
   .menu .note{padding:6px 10px 8px;font-size:12px;color:var(--ink-3);line-height:1.4}
 
   /* ---------- status strip ---------- */
-  .strip{display:flex;align-items:center;gap:18px;margin-bottom:18px;font-size:13px;color:var(--ink-2);
-    flex-wrap:wrap;min-height:20px}
+  .strip{display:flex;align-items:center;gap:18px;margin-bottom:11px;font-size:13px;color:var(--ink-2);
+    flex-wrap:wrap;min-height:0}
   .stat{display:inline-flex;align-items:center;gap:6px}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
   .dot.amber{background:var(--amber)} .dot.red{background:var(--red)}
@@ -322,6 +326,8 @@
       <input id="q" type="search" placeholder="Search notes and actions" autocomplete="off" aria-label="Search">
       <button class="x" id="qClear" aria-label="Clear search">×</button>
     </div>
+    <button class="btn focusbtn" id="btnFocus" title="Show only Focus" aria-pressed="false">
+      <span class="fstar">★</span><span id="focusCount">0</span></button>
     <span class="sp"></span>
     <button class="iconbtn" id="btnNewAction" title="New action" aria-label="New action">
       <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor"
@@ -466,7 +472,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="0.6.0";
+const APP_VERSION="0.7.0";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1";
 const COLS=["todo","doing","done"];
@@ -789,17 +795,14 @@ function renderStrip(){
       : "";
     const c=document.getElementById("clrAll");
     if(c)c.onclick=()=>{activePerson="";activeSubject="";activeGroup="";setQuery("");renderAll()};
+    el.style.display=el.innerHTML?"":"none";
     return;
   }
-  const open=state.filter(a=>a.col!=="done");
-  const foc=open.filter(a=>a.focus).length;
-  if(!state.length){el.innerHTML="";return}
+  if(!state.length){el.innerHTML="";el.style.display="none";return}
   let h="";
-  if(foc||focusOnly)h+='<span class="stat link focuschip'+(focusOnly?" on":"")+'" data-focustoggle title="Show only Focus"><span style="color:var(--amber)">★</span> <b>'+foc+'</b> focus'+(focusOnly?" · showing":"")+'</span>';
   if(query)h+='<span class="stat">matching “'+esc(query)+'”</span>';
   el.innerHTML=h;
-  const fc=el.querySelector("[data-focustoggle]");
-  if(fc)fc.onclick=()=>{focusOnly=!focusOnly;renderAll()};
+  el.style.display=h?"":"none";
 }
 
 /* ---------- board ---------- */
@@ -1494,7 +1497,19 @@ function archiveOldDone(){
   });
   return changed;
 }
-function renderAll(){if(archiveOldDone())save();renderStrip();renderBackupState();updateStorageUI();if(tab==="actions")renderBoard();else renderNotes()}
+function updateFocusBtn(){
+  const b=document.getElementById("btnFocus");if(!b)return;
+  if(tab!=="actions"){b.style.display="none";return}
+  b.style.display="";
+  const n=state.filter(a=>a.col!=="done"&&a.focus).length;
+  document.getElementById("focusCount").textContent=n;
+  b.classList.toggle("on",focusOnly);
+  b.setAttribute("aria-pressed",String(focusOnly));
+  b.disabled=(n===0&&!focusOnly);
+  b.title=focusOnly?"Showing only Focus — click to show all":"Show only Focus";
+}
+document.getElementById("btnFocus").onclick=()=>{focusOnly=!focusOnly;renderAll()};
+function renderAll(){if(archiveOldDone())save();renderStrip();renderBackupState();updateStorageUI();updateFocusBtn();if(tab==="actions")renderBoard();else renderNotes()}
 
 /* migrate */
 function migrate(){

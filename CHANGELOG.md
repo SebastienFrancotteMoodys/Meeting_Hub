@@ -3,6 +3,11 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v0.7.0 — 2026-08-28
+### Changed
+- **Focus toggle moved next to the search bar** — a ★ button with a live count of focused actions, replacing the status-strip chip. Disabled when nothing is focused.
+- **Tighter header**: the status strip now collapses when empty, reducing the gap between the toolbar and the board.
+
 ## v0.6.0 — 2026-08-28
 ### Added
 - **Auto-archive Done**: an action that has sat in Done for 24h leaves the board automatically. It is kept in the data file and can be restored from ⋯ → "Archived actions" (Restore back to Done, or Delete). Existing Done cards get a fresh 24h grace on first load — nothing is purged on upgrade.
