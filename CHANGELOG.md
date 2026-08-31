@@ -7,7 +7,7 @@ Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATC
 ### Changed
 - **First stable release.** No functional change over v0.8.0 — this marks the meeting loop as complete: capture → `/close-meeting` → auto-import from `meeting-hub-inbox.json` → `/enrich-meeting` to fold in a second source, on top of actions, notes, preps with carry-over, focus, screenshots and auto-archiving.
 
-> Note: the earlier `v1.0` tag is unrelated — an out-of-sequence tag left on an early screenshots commit, kept for history. The release line is `vMAJOR.MINOR.PATCH`, so this one is `v1.0.0`.
+> Housekeeping: two out-of-sequence tags (`v1.0` on an early screenshots commit, `v0.1` on a README edit) were deleted with this release. Their commits remain in `main`; only the tag names are gone. Every release is tagged `vMAJOR.MINOR.PATCH`.
 
 ## v0.8.0 — 2026-08-31
 ### Added
