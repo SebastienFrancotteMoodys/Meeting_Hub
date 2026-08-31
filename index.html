@@ -472,7 +472,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="0.7.0";
+const APP_VERSION="0.8.0";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1";
 const COLS=["todo","doing","done"];
@@ -1328,6 +1328,29 @@ function importRaw(raw,viaClip){
   const bullets=Array.isArray(data.content)?data.content.map(trimEnd).filter(Boolean)
     :String(data.content||"").split(/\n/).map(trimEnd).filter(Boolean);
   const ppl=Array.isArray(data.people)?data.people.map(p=>String(p).trim()).filter(Boolean):[];
+  /* mode:"enrich" — update an existing (non-prep) note in place instead of adding a second one.
+     Used when notes from another source (Copilot, a colleague) are reconciled into an already-imported
+     meeting. New actions still flow through the dedupe above; the note itself is replaced, with undo. */
+  const mode=String(data.mode||"").trim().toLowerCase();
+  if(mode==="enrich" && meeting){
+    const em=meeting.toLowerCase().trim(), dt=String(data.date||"").trim();
+    const pool=notesState.map((n,idx)=>({n:n,idx:idx})).filter(o=>o.n.status!=="prep");
+    const t=pool.find(o=>(o.n.meeting||"").toLowerCase().trim()===em&&(o.n.date||"")===dt)
+          ||pool.find(o=>subjectKey(o.n.meeting)===subjectKey(meeting)&&(o.n.date||"")===dt)
+          ||pool.find(o=>(o.n.meeting||"").toLowerCase().trim()===em);
+    if(t){
+      const i=t.idx, prev=JSON.parse(JSON.stringify(notesState[i])), n=notesState[i];
+      if(bullets.length){n.bullets=bullets;delete n.content}
+      if(ppl.length)n.people=Array.from(new Set(notePeople(n).concat(ppl)));
+      save();closeOv(pasteOv);document.getElementById("pasteText").value="";renderAll();
+      toastUndo("Note enriched: "+(n.meeting||"untitled")
+        +(added?" · "+added+" new action"+(added===1?"":"s"):"")
+        +(dupes?" · "+dupes+" duplicate"+(dupes===1?"":"s")+" skipped":""),
+        ()=>{notesState[i]=prev;save();renderAll();toast("Note restored.")});
+      return;
+    }
+    toast("No matching note to enrich — importing as a new note.");
+  }
   if(data.merge===true && meeting){
     const em=meeting.trim().toLowerCase();
     let i=notesState.findIndex(n=>n.status==="prep" && (n.meeting||"").trim().toLowerCase()===em);

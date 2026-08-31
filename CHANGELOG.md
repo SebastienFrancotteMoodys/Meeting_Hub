@@ -3,6 +3,14 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v0.8.0 — 2026-08-31
+### Added
+- **Enrich an existing note** — an import payload carrying `"mode": "enrich"` now updates a note that is already on the board instead of creating a second one. Made for folding in notes from another source (a Copilot transcript, a colleague's minutes, a recap email) after the meeting was already closed. The note's bullets are replaced by the reconciled set, participants are merged, and the toast offers **Undo**.
+- Enrich targets a note by exact title + date, then falls back to the base subject (everything before the first `-`) + date, then the title alone. `prep` notes are never targeted, and when nothing matches the payload is imported as a new note with a notice.
+
+### Changed
+- Actions in an enrich payload go through the usual dedupe (`summary` + `meeting`), so re-sending known actions is a no-op while genuinely new ones are added.
+
 ## v0.7.0 — 2026-08-28
 ### Changed
 - **Focus toggle moved next to the search bar** — a ★ button with a live count of focused actions, replacing the status-strip chip. Disabled when nothing is focused.
