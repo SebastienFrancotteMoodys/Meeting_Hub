@@ -3,6 +3,12 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v1.0.0 — 2026-08-31
+### Changed
+- **First stable release.** No functional change over v0.8.0 — this marks the meeting loop as complete: capture → `/close-meeting` → auto-import from `meeting-hub-inbox.json` → `/enrich-meeting` to fold in a second source, on top of actions, notes, preps with carry-over, focus, screenshots and auto-archiving.
+
+> Note: the earlier `v1.0` tag is unrelated — an out-of-sequence tag left on an early screenshots commit, kept for history. The release line is `vMAJOR.MINOR.PATCH`, so this one is `v1.0.0`.
+
 ## v0.8.0 — 2026-08-31
 ### Added
 - **Enrich an existing note** — an import payload carrying `"mode": "enrich"` now updates a note that is already on the board instead of creating a second one. Made for folding in notes from another source (a Copilot transcript, a colleague's minutes, a recap email) after the meeting was already closed. The note's bullets are replaced by the reconciled set, participants are merged, and the toast offers **Undo**.
