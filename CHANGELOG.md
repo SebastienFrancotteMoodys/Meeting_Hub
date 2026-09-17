@@ -3,6 +3,11 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v1.1.1 — 2026-09-17
+### Fixed
+- **Collapsed note cards were squashed to a sliver** when a column held many notes: as flex children of a height-constrained column they shrank instead of keeping their 140px, leaving the title and content clipped mid-line. Cards now hold their height and the column scrolls.
+- The expand chevron on a card header was too small and faint to read; it is now legible.
+
 ## v1.1.0 — 2026-09-17
 ### Added
 - **Notes tab rebuilt as two persistent columns** — Coming Up (~58%) and History (~42%), each independently scrollable with a sticky heading. History is no longer scrolled past to reach; both columns share the same card anatomy.
