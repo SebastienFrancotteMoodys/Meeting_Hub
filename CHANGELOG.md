@@ -3,6 +3,16 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v1.1.0 — 2026-09-17
+### Added
+- **Notes tab rebuilt as two persistent columns** — Coming Up (~58%) and History (~42%), each independently scrollable with a sticky heading. History is no longer scrolled past to reach; both columns share the same card anatomy.
+- **People panel**: entries are now resolved to one canonical identity (merging duplicates like "Seb" / "Sebastien" / "Sebastien Francotte" via a one-time Merge / Keep separate prompt, persisted), grouped into Recurring / Recent / All people (max 7 rows shown, "Show all (N)"), with a Carried-over count badge per person.
+- **Unified filtering**: People and Subjects are filters, not navigation — cumulative (AND across sections, OR within one), shown as removable chips above the results with a result count and a "Clear all". Empty combinations show a message instead of a blank column.
+- **Card redesign**: fixed 140px collapsed height showing a type badge (Prep/Note), a due-date status badge (Overdue/Today/upcoming), participants, a typed-count summary, and the two highest-priority items; click the header to expand into grouped Carried-over actions/questions, Notes and Decisions (accordion — one card open per column).
+- **Prep → Note transition**: a Prep note automatically becomes a Note once its meeting date has passed, moving it from Coming Up to History.
+- Search now also matches linked actions' text, is debounced (250ms), shows a live result count, and combines with active facet filters.
+- Subject categories that contained a subject duplicating the category's own name now collapse that duplicate into the category count instead of showing it as a redundant child row.
+
 ## v1.0.0 — 2026-08-31
 ### Changed
 - **First stable release.** No functional change over v0.8.0 — this marks the meeting loop as complete: capture → `/close-meeting` → auto-import from `meeting-hub-inbox.json` → `/enrich-meeting` to fold in a second source, on top of actions, notes, preps with carry-over, focus, screenshots and auto-archiving.

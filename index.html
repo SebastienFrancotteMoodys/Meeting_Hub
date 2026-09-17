@@ -39,12 +39,15 @@
   .search{position:relative;flex:1;max-width:340px}
   .search input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;
     padding:7px 30px 7px 32px;font-size:14px;box-shadow:var(--shadow)}
+  .search.filled input{padding-right:64px}
   .search input::placeholder{color:var(--ink-3)}
   .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
   .search .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;
     color:var(--ink-3);cursor:pointer;padding:3px 5px;border-radius:5px;display:none;font-size:15px;line-height:1}
   .search.filled .x{display:block}
   .search .x:hover{background:var(--line-2);color:var(--ink)}
+  .search .qcount{position:absolute;right:26px;top:50%;transform:translateY(-50%);font-size:11px;
+    color:var(--ink-3);white-space:nowrap;pointer-events:none}
 
   .btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 13px;
     cursor:pointer;font-size:13.5px;font-weight:500;box-shadow:var(--shadow);white-space:nowrap}
@@ -158,10 +161,79 @@
   .tile{display:flex;justify-content:space-between;gap:8px;align-items:center;text-align:left;
     background:transparent;border:0;border-radius:7px;padding:6px 9px;cursor:pointer;font-size:13.5px;color:var(--ink-2)}
   .tile:hover{background:#E9EBEF;color:var(--ink)}
-  .tile[aria-pressed="true"]{background:var(--accent);color:#fff}
+  .tile[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:620}
   .tile .n{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
   .tile[aria-pressed="true"] .n{color:#C7D3E2}
   .tile-empty{color:var(--ink-3);font-size:12.5px;padding:3px 9px;font-style:italic}
+
+  /* ----- R1: people panel ----- */
+  .pcolhead{display:flex;justify-content:space-between;gap:8px;padding:2px 9px 6px;
+    font-size:10.5px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+  .pgroup+.pgroup{margin-top:14px}
+  .pgroup-head{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--ink-3);padding:4px 9px 2px;display:flex;align-items:center;gap:6px;
+    background:transparent;border:0;width:100%;text-align:left;cursor:pointer}
+  .pgroup-head:hover{color:var(--ink)}
+  .pgroup-head .chev{font-size:9px;width:9px;flex:none}
+  .pgroup-list{display:flex;flex-direction:column;gap:2px}
+  .prow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;
+    border:1px solid transparent;border-radius:7px;padding:5px 9px;cursor:pointer;font-size:13.5px;color:var(--ink-2)}
+  .prow:hover{background:#E9EBEF}
+  .prow[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:620}
+  .pavatar{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:#fff;letter-spacing:.02em}
+  .pname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcount{flex:none;font-size:11.5px;font-weight:650;color:var(--ink-3);font-variant-numeric:tabular-nums;
+    background:var(--line-2);border-radius:10px;padding:1px 7px}
+  .prow[aria-pressed="true"] .pcount{color:var(--accent);background:#fff}
+  .pmore{background:transparent;border:0;color:var(--ink-3);font-size:12px;cursor:pointer;padding:4px 9px;text-align:left;width:100%}
+  .pmore:hover{color:var(--accent)}
+  .pmerge{margin:2px 2px 6px;padding:9px 10px;background:var(--amber-bg);border:1px solid var(--amber-line);
+    border-radius:8px;font-size:12.5px;color:var(--ink)}
+  .pmerge-q{margin-bottom:7px;line-height:1.4}
+  .pmerge-acts{display:flex;gap:7px}
+  .pmerge-acts button{background:var(--surface);border:1px solid var(--amber-line);color:var(--amber);
+    border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  .pmerge-acts button:hover{background:var(--amber);color:#fff}
+  .pmerge-acts button.keep{color:var(--ink-2);border-color:var(--line)}
+  .pmerge-acts button.keep:hover{background:var(--line-2);color:var(--ink)}
+
+  /* ----- R2: filter chip bar ----- */
+  .chipbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:12px}
+  .chipbar:empty{display:none;margin:0}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);
+    border:1px solid #D3DFEC;border-radius:20px;padding:3px 6px 3px 11px;font-size:12.5px;font-weight:560}
+  .chip button{background:transparent;border:0;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;
+    padding:1px 4px;border-radius:50%}
+  .chip button:hover{background:rgba(47,74,109,.14)}
+  .chipbar .lnk{margin-left:auto;font-size:12.5px}
+  .resultcount{font-size:12.5px;color:var(--ink-3);margin:-4px 0 12px}
+
+  /* ----- R5: two-column notes layout ----- */
+  .notecols{display:grid;grid-template-columns:58fr 42fr;gap:22px;align-items:start}
+  .notecol{min-width:0}
+  .notecol-head{position:sticky;top:0;background:var(--bg);z-index:2;font-size:11.5px;font-weight:650;
+    text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);padding:2px 2px 10px}
+  .notecol-body{max-height:calc(100vh - 150px);overflow-y:auto;padding-right:4px;
+    display:flex;flex-direction:column;gap:10px}
+  @media (max-width:1280px){
+    .notecols{grid-template-columns:1fr}
+    .notecol-history{order:2}
+    .notecol-body{max-height:none;overflow-y:visible}
+  }
+
+  /* ----- R3/R4: note-type + status badges ----- */
+  .typebadge{border-radius:5px;padding:1px 7px;font-size:11px;font-weight:620;text-transform:uppercase;
+    letter-spacing:.05em;flex:none}
+  .typebadge.t-prep{background:var(--accent-soft);color:var(--accent)}
+  .typebadge.t-note{background:#EEF0F3;color:var(--ink-2)}
+  .typebadge.t-action{background:var(--accent-soft);color:var(--accent)}
+  .typebadge.t-question{background:#EEF0F3;color:var(--ink-2)}
+  .typebadge.t-decision{background:var(--accent-soft);color:var(--accent)}
+  .statusbadge{border-radius:5px;padding:1px 7px;font-size:11px;font-weight:650;flex:none;white-space:nowrap}
+  .statusbadge.s-overdue{background:var(--red-bg);color:var(--red)}
+  .statusbadge.s-today{background:var(--amber-bg);color:var(--amber)}
+  .statusbadge.s-upcoming{background:var(--line-2);color:var(--ink-2)}
 
   .grp{margin-bottom:2px}
   .grphead{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:transparent;
@@ -188,19 +260,34 @@
   .ungrp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);
     padding:8px 9px 4px;border-radius:7px;border:1px solid transparent}
 
-  .notecard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-    padding:17px 19px;box-shadow:var(--shadow);margin-bottom:14px}
-  .notecard.prep{border-left:3px solid var(--accent);background:#FCFDFE}
-  .prephead{display:flex;align-items:center;gap:9px;margin:0 0 11px;font-size:11.5px;
-    text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:620}
-  .prephead::after{content:"";flex:1;height:1px;background:var(--line)}
-  .heldhead{margin-top:26px}
-  .badge-prep{background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:1px 7px;
-    font-size:11px;font-weight:620;text-transform:uppercase;letter-spacing:.05em}
   .chk-prep{background:var(--accent-soft);border-color:#C3D3E5}
-  .nc-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:3px}
-  .nc-title{font-size:15.5px;font-weight:640;letter-spacing:-.01em;line-height:1.3}
-  .nc-sub{font-size:12.5px;color:var(--ink-3);margin-bottom:13px}
+
+  /* ----- R4: card (tile) anatomy ----- */
+  .notecard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:12px 14px 13px;box-shadow:var(--shadow);position:relative}
+  .notecard:not(.expanded){height:140px;overflow:hidden}
+  .notecard.prep{border-left:3px solid var(--accent);background:#FCFDFE}
+  .nc-headrow{display:flex;align-items:center;gap:6px}
+  .nc-head{display:flex;align-items:center;gap:7px;min-width:0;flex:1;background:transparent;border:0;
+    padding:0;margin:0;cursor:pointer;text-align:left;font:inherit;color:inherit}
+  .nc-title{font-size:14.5px;font-weight:640;letter-spacing:-.005em;line-height:1.3;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+  .nc-chev{flex:none;font-size:10px;color:var(--ink-3);transition:transform .16s ease;display:inline-block}
+  .notecard.expanded .nc-chev{transform:rotate(90deg)}
+  .nc-edit{flex:none}
+  .nc-meta{font-size:12px;color:var(--ink-3);margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nc-counts{font-size:12px;color:var(--ink-2);margin-top:6px;font-weight:550;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nc-top2{margin-top:7px;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .nc-top2-item{font-size:13px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+  .nc-bodywrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s ease}
+  .notecard.expanded .nc-bodywrap{grid-template-rows:1fr}
+  .nc-bodyinner{overflow:hidden;min-height:0}
+  .nc-body{padding-top:11px;margin-top:11px;border-top:1px solid var(--line-2);font-size:13.5px;line-height:1.55}
+  .nc-body h4{margin:14px 0 5px;font-size:10.5px;font-weight:650;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-2)}
+  .nc-body h4:first-child{margin-top:0}
+  .nc-body .empty-sub{color:var(--ink-3);font-style:italic;font-size:13px}
   .nc-list{margin:0;padding:0;list-style:none;font-size:14px;line-height:1.6;color:var(--ink)}
   .nc-list li{position:relative;padding-left:16px;margin-bottom:5px}
   .nc-list li::before{content:"";position:absolute;left:3px;top:.62em;width:4px;height:4px;border-radius:50%;background:var(--ink-3)}
@@ -230,11 +317,7 @@
   .nc-list li .li-act:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
   @media (hover:none){ .nc-list li .li-act{opacity:1} }
 
-  /* prep carry-over */
-  .carry{background:var(--accent-soft);border:1px solid #D3DFEC;border-radius:8px;padding:10px 12px;margin:2px 0 13px}
-  .carry-h{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);
-    margin-bottom:5px;display:flex;align-items:center;gap:7px}
-  .carry-h::after{content:"";flex:1;height:1px;background:#CBDAEA}
+  /* carried-over content — rendered as primary card body (R4-C), no boxed aside */
   .carry-sub{font-size:11px;font-weight:600;color:var(--ink-2);margin:7px 0 3px}
   .carry-list{margin:0;padding:0 0 0 16px;font-size:13px;line-height:1.5;color:var(--ink)}
   .carry-list li{margin-bottom:2px}
@@ -324,6 +407,7 @@
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
         <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14" stroke-linecap="round"/></svg>
       <input id="q" type="search" placeholder="Search notes and actions" autocomplete="off" aria-label="Search">
+      <span class="qcount" id="qCount" style="display:none"></span>
       <button class="x" id="qClear" aria-label="Clear search">×</button>
     </div>
     <button class="btn focusbtn" id="btnFocus" title="Show only Focus" aria-pressed="false">
@@ -391,12 +475,27 @@
 
   <div class="view" id="view-notes">
     <div class="notes">
-      <div class="rail">
-        <section><h3>People</h3><div class="tiles" id="tiles-people"></div></section>
+      <nav class="rail" aria-label="Filters">
+        <section><h3>People</h3>
+          <div class="pcolhead"><span>Person</span><span>Carried over</span></div>
+          <div id="tiles-people"></div></section>
         <section><h3>Subjects</h3><div class="tiles" id="tiles-subjects"></div>
           <div class="railfoot"><button id="newGroup">+ New category</button></div></section>
+      </nav>
+      <div>
+        <div class="chipbar" id="chipBar" aria-live="polite"></div>
+        <div class="resultcount" id="resultCount" style="display:none"></div>
+        <div class="notecols">
+          <div class="notecol notecol-coming">
+            <div class="notecol-head">Coming up</div>
+            <div class="notecol-body" id="col-coming"></div>
+          </div>
+          <div class="notecol notecol-history">
+            <div class="notecol-head">History</div>
+            <div class="notecol-body" id="col-history"></div>
+          </div>
+        </div>
       </div>
-      <div><div id="notecards"></div></div>
     </div>
   </div>
 </div>
@@ -472,12 +571,14 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="1.0.0";
+const APP_VERSION="1.1.0";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
-      GROUPS_KEY="meeting-groups-v1";
+      GROUPS_KEY="meeting-groups-v1", MERGE_KEY="meeting-merges-v1";
 const COLS=["todo","doing","done"];
-let state=load(KEY), notesState=load(NOTES_KEY), groupsState=load(GROUPS_KEY);
-let tab="actions", query="", activePerson="", activeSubject="", activeGroup="", openCard=null,
+let state=load(KEY), notesState=load(NOTES_KEY), groupsState=load(GROUPS_KEY), mergeState=load(MERGE_KEY);
+let tab="actions", query="", queryTimer=null,
+    activePersons=new Set(), activeSubjects=new Set(), openCard=null,
+    expandedComing=null, expandedHistory=null,
     editing=null, editingNote=null, dragId=null, dragSubject=null, linkNoteId=null, focusOnly=false;
 let dirHandle=null, dirName="", dataHandle=null, fsSaveTimer=null, fsSaving=false, pendingHandle=null, inboxTimer=null;
 const IDB_DB="meeting-hub-fs", IDB_STORE="handles", IDB_KEY="dataDir";
@@ -486,7 +587,7 @@ let editImages=[]; const imgURLCache=new Map();
 function load(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):[]}catch(e){return[]}}
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(state));localStorage.setItem(NOTES_KEY,JSON.stringify(notesState));
-    localStorage.setItem(GROUPS_KEY,JSON.stringify(groupsState))}
+    localStorage.setItem(GROUPS_KEY,JSON.stringify(groupsState));localStorage.setItem(MERGE_KEY,JSON.stringify(mergeState))}
   catch(e){if(!dirHandle)toast("Could not save to the browser. Connect a data folder or export a backup.")}
   scheduleFsWrite();
 }
@@ -494,13 +595,14 @@ function save(){
 /* ---------- local folder storage + auto-import (File System Access API) ---------- */
 const DATA_FILE="meeting-hub.json", INBOX_FILE="meeting-hub-inbox.json";
 function storageSupported(){return typeof window!=="undefined" && !!window.showDirectoryPicker}
-function snapshot(){return {actions:state,notes:notesState,groups:groupsState}}
+function snapshot(){return {actions:state,notes:notesState,groups:groupsState,merges:mergeState}}
 function hydrate(d){
   if(!d)return;
-  if(Array.isArray(d)){state=d;notesState=[];groupsState=[];return}
+  if(Array.isArray(d)){state=d;notesState=[];groupsState=[];mergeState=[];return}
   state=Array.isArray(d.actions)?d.actions:[];
   notesState=Array.isArray(d.notes)?d.notes:[];
   groupsState=Array.isArray(d.groups)?d.groups:[];
+  mergeState=Array.isArray(d.merges)?d.merges:[];
 }
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_DB,1);
   r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);
@@ -748,6 +850,103 @@ function guessOwner(text,people){
   return "";
 }
 
+/* ---------- R1: identity resolution ---------- */
+/* R1-A: `email` is the canonical identity key. TODO(data): captured people are plain names today
+   (no email is recorded anywhere in the note/action data), so in practice every entry below takes
+   the name-only path and is resolved only via the merge-suggestion flow, never by email match. */
+function normPersonKey(s){return String(s||"").trim().toLowerCase().replace(/\s+/g," ")}
+function isEmail(s){return /\S+@\S+\.\S+/.test(String(s||""))}
+function sameSet(a,b){if(a.length!==b.length)return false;const s=new Set(a);return b.every(x=>s.has(x))}
+function carryKeyOf(n){return [...new Set(notePeople(n).map(normPersonKey))]}
+
+/* Build one canonical identity per person, folding in any saved merge/keep-separate decisions,
+   plus a list of not-yet-decided merge suggestions for name-only duplicates (e.g. "Seb" / "Sebastien Francotte"). */
+function buildIdentities(){
+  const byKey=new Map(); // normalized name/email -> {names:Map<raw,count>, email, mentions:[{date,isPrep,noteId}]}
+  notesState.forEach(n=>{
+    notePeople(n).forEach(raw=>{
+      const name=String(raw).trim();if(!name)return;
+      const email=isEmail(name)?normPersonKey(name):null;
+      const key=email||normPersonKey(name);
+      if(!byKey.has(key))byKey.set(key,{key,email,names:new Map(),mentions:[]});
+      const rec=byKey.get(key);
+      rec.names.set(name,(rec.names.get(name)||0)+1);
+      rec.mentions.push({date:n.date||"",isPrep:n.status==="prep",noteId:n.id});
+    });
+  });
+  /* union-find so merges compose transitively (A merges with B, B merges with C => one identity) */
+  const parent=new Map();byKey.forEach((_,k)=>parent.set(k,k));
+  const ufFind=x=>{while(parent.get(x)!==x)x=parent.get(x);return x};
+  const ufUnion=(a,b)=>{const ra=ufFind(a),rb=ufFind(b);if(ra!==rb)parent.set(ra,rb)};
+  mergeState.filter(m=>m.decision==="merge").forEach(m=>{
+    const present=(m.aliases||[]).filter(k=>byKey.has(k));
+    for(let i=1;i<present.length;i++)ufUnion(present[0],present[i]);
+  });
+  const merged=new Map();
+  byKey.forEach((rec,key)=>{
+    const fkey=ufFind(key);
+    if(!merged.has(fkey))merged.set(fkey,{key:fkey,names:new Map(),mentions:[],email:null});
+    const dest=merged.get(fkey);
+    rec.names.forEach((c,name)=>dest.names.set(name,(dest.names.get(name)||0)+c));
+    dest.mentions.push(...rec.mentions);
+    if(rec.email)dest.email=rec.email;
+  });
+  const identities=[];
+  merged.forEach(rec=>{
+    const names=[...rec.names.keys()];
+    const canonical=names.slice().sort((a,b)=>
+      (b.split(/\s+/).length-a.split(/\s+/).length)||(b.length-a.length))[0];
+    const lastMention=rec.mentions.reduce((m,x)=>x.date>m?x.date:m,"");
+    const nextPrepDate=rec.mentions.filter(x=>x.isPrep&&x.date).map(x=>x.date).sort()[0]||"";
+    /* TODO(data): no series/synch record exists — "recurring" is approximated as
+       "currently named in at least one upcoming Prep note", since a Prep note is how this
+       app represents the next occurrence of a recurring meeting. */
+    const recurring=rec.mentions.some(x=>x.isPrep);
+    identities.push({key:rec.key,email:rec.email,canonical,namesNorm:new Set(names.map(normPersonKey)),
+      lastMention,recurring,nextPrepDate,mentions:rec.mentions});
+  });
+  /* candidate duplicates: same first name (exact, e.g. "Tom"/"Tom Shields"), or a short nickname
+     that is a case-insensitive prefix of the other's first name (e.g. "Seb"/"Sebastien Francotte") */
+  const suggestions=[],seenPairs=new Set();
+  identities.forEach(a=>{identities.forEach(b=>{
+    if(a===b||a.email||b.email)return;
+    if(a.canonical===b.canonical)return;
+    const aw=a.canonical.split(/\s+/),bw=b.canonical.split(/\s+/);
+    if(aw.length===bw.length)return;
+    const af=aw[0].toLowerCase(),bf=bw[0].toLowerCase();
+    const related = af===bf || (af.length>=3&&bf.startsWith(af)) || (bf.length>=3&&af.startsWith(bf));
+    if(!related)return;
+    const pairKey=[a.key,b.key].sort().join("~");if(seenPairs.has(pairKey))return;seenPairs.add(pairKey);
+    if(mergeState.some(m=>m.decision&&sameSet(m.aliases||[],[a.key,b.key])))return;
+    suggestions.push({keyA:a.key,keyB:b.key,nameA:a.canonical,nameB:b.canonical});
+  })});
+  return {identities,suggestions};
+}
+/* R1-E: carried-over count for a person = sum, across every upcoming Prep meeting they're part of,
+   of that meeting's "to carry over" actions + questions (see carryOverData). Per the spec's literal
+   wording this is block-level, not per-owner — TODO(decision): several co-attendees of the same prep
+   each see that prep's full carry-over count, not just the items assigned to them individually. */
+function personCarryCount(identity){
+  let n=0;
+  notesState.forEach(note=>{
+    if(note.status!=="prep")return;
+    if(!carryKeyOf(note).some(k=>identity.namesNorm.has(k)))return;
+    const c=carryOverData(note);
+    n+=c.actions.length+c.questions.length;
+  });
+  return n;
+}
+function avatarColor(name){
+  let h=0;const s=String(name||"");
+  for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+  return "hsl("+(h%360)+" 42% 42%)";
+}
+function initialsOf(name){
+  const parts=String(name||"").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length)return "?";
+  return (parts[0][0]+(parts[1]?parts[1][0]:parts[0][1]||"")).toUpperCase();
+}
+
 /* ---------- dates ---------- */
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function today0(){const d=new Date();d.setHours(0,0,0,0);return d}
@@ -763,10 +962,37 @@ function dueInfo(s){
   if(days<=5) return {label:"In "+days+" days", cls:"soon", days};
   return {label:nice, cls:"", days};
 }
+const WEEKDAY=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+/* R3-A status badge: exact label/treatment rules, distinct from the free-text dueInfo() used elsewhere */
+function statusBadgeInfo(s){
+  if(!s)return null;
+  const p=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if(!p)return null;
+  const d=new Date(+p[1],+p[2]-1,+p[3]); if(isNaN(d))return null;
+  const days=Math.round((d-today0())/86400000);
+  if(days<0)return {label:"Overdue · "+(-days)+"d", cls:"s-overdue", title:s};
+  if(days===0)return {label:"Today", cls:"s-today", title:s};
+  if(days<=7)return {label:days===1?WEEKDAY[(today0().getDay()+1)%7]:WEEKDAY[d.getDay()], cls:"s-upcoming", title:s};
+  return {label:"In "+days+"d", cls:"s-upcoming", title:s};
+}
+/* R3-D: Prep -> Note once the meeting date has passed. Idempotent (only ever flips prep->held). */
+function transitionPreps(){
+  const t=today0();let changed=false;
+  notesState.forEach(n=>{
+    if(n.status!=="prep"||!n.date)return;
+    const p=/^(\d{4})-(\d{2})-(\d{2})$/.exec(n.date);if(!p)return;
+    const d=new Date(+p[1],+p[2]-1,+p[3]);if(isNaN(d))return;
+    if(d<t){n.status="held";changed=true}
+  });
+  return changed;
+}
 
 /* ---------- search ---------- */
 function hay(a){return [a.summary,a.detail,a.owner,a.meeting].join(" ").toLowerCase()}
-function noteHay(n){return [n.meeting,notePeople(n).join(" "),noteBullets(n).join(" ")].join(" ").toLowerCase()}
+/* R5-C: search covers note bodies, titles, participants, and the text of linked actions/questions */
+function noteHay(n){
+  const acts=linkedActions(n).flatMap(a=>[a.summary,a.detail,a.owner]);
+  return [n.meeting,notePeople(n).join(" "),noteBullets(n).join(" "),acts.join(" ")].join(" ").toLowerCase();
+}
 function hl(text){
   const t=esc(text); if(!query)return t;
   try{return t.replace(new RegExp("("+query.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<mark>$1</mark>")}
@@ -782,6 +1008,7 @@ function setTab(t){
   document.querySelectorAll(".seg").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.tab===t)));
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+t));
   renderAll();
+  if(typeof updateQCount==="function")updateQCount();
 }
 
 /* ---------- status strip ---------- */
@@ -791,10 +1018,7 @@ function renderStrip(){
     const n=notesState.length, p=new Set(notesState.flatMap(notePeople)).size;
     el.innerHTML = n
       ? '<span class="stat"><b>'+n+'</b> note'+(n>1?"s":"")+'</span><span class="stat"><b>'+p+'</b> '+(p===1?"person":"people")+'</span>'
-        +(activePerson||activeSubject||activeGroup||query?'<button class="lnk" id="clrAll">Clear filters</button>':"")
       : "";
-    const c=document.getElementById("clrAll");
-    if(c)c.onclick=()=>{activePerson="";activeSubject="";activeGroup="";setQuery("");renderAll()};
     el.style.display=el.innerHTML?"":"none";
     return;
   }
@@ -924,8 +1148,8 @@ document.addEventListener("click",e=>{
     const el2=document.querySelector('[data-id="'+id+'"]');
     if(el2)el2.scrollIntoView({block:"center",behavior:"smooth"});
   }
-  if(b.dataset.src){activeSubject=b.dataset.src;activePerson="";setQuery("");setTab("notes")}
-  if(b.dataset.toActions){activeSubject="";setQuery(b.dataset.toActions);setTab("actions")}
+  if(b.dataset.src){activeSubjects=new Set([b.dataset.src]);activePersons.clear();setQuery("");setTab("notes")}
+  if(b.dataset.toActions){activeSubjects.clear();setQuery(b.dataset.toActions);setTab("actions")}
   if(!b.closest(".menu")&&b.id!=="btnMenu")closeMenus();
 });
 
@@ -938,18 +1162,84 @@ function assignSubject(subject,groupId){
   save();renderAll();
 }
 
-function renderNotes(){
-  const people={},subjects={};
-  notesState.forEach(n=>{notePeople(n).forEach(p=>people[p]=(people[p]||0)+1);
-    const s=n.meeting||"No subject";subjects[s]=(subjects[s]||0)+1});
-
+/* ---------- R1: people panel ---------- */
+let peopleGroupOpen={Recurring:true,Recent:true,"All people":false};
+let peopleGroupShowAll={};
+function renderPeoplePanel(){
+  const {identities,suggestions}=buildIdentities();
   const pB=document.getElementById("tiles-people");
-  pB.innerHTML=Object.keys(people).length?Object.entries(people).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
-    .map(([n,c])=>tileHTML(n,c,n===activePerson,"person",false)).join(""):'<div class="tile-empty">No one yet</div>';
-  document.querySelectorAll(".tile[data-person]").forEach(el=>el.onclick=()=>{
-    activePerson=activePerson===el.dataset.person?"":el.dataset.person;renderAll()});
+  if(!identities.length){pB.innerHTML='<div class="tile-empty">No one yet</div>';return}
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-30);
+  const cutoffStr=cutoff.toISOString().slice(0,10);
+  const rec=[],recent=[],allOthers=[];
+  identities.forEach(idn=>{
+    if(idn.recurring)rec.push(idn);
+    else if(idn.lastMention&&idn.lastMention>=cutoffStr)recent.push(idn);
+    else allOthers.push(idn);
+  });
+  const sortFn=(a,b)=>{
+    const an=a.nextPrepDate||"9999-99-99", bn=b.nextPrepDate||"9999-99-99";
+    if(an!==bn)return an<bn?-1:1;
+    const al=a.lastMention||"", bl=b.lastMention||"";
+    if(al!==bl)return al>bl?-1:1;
+    return a.canonical.localeCompare(b.canonical);
+  };
+  rec.sort(sortFn);recent.sort(sortFn);allOthers.sort(sortFn);
+  let h=mergeSuggestionsHTML(suggestions);
+  h+=peopleGroupHTML("Recurring",rec)+peopleGroupHTML("Recent",recent)+peopleGroupHTML("All people",allOthers);
+  pB.innerHTML=h||'<div class="tile-empty">No one yet</div>';
+  wirePeoplePanel();
+}
+function peopleGroupHTML(label,items){
+  if(!items.length)return "";
+  const open=!!peopleGroupOpen[label];
+  const showAll=!!peopleGroupShowAll[label];
+  const shown=showAll?items:items.slice(0,7);
+  const rows=shown.map(personRowHTML).join("");
+  const more=items.length>7
+    ?'<button class="pmore" data-pmore="'+esc(label)+'">'+(showAll?"Show less":"Show all ("+items.length+")")+'</button>':"";
+  return '<div class="pgroup">'
+    +'<button class="pgroup-head" data-pgtoggle="'+esc(label)+'" aria-expanded="'+open+'">'
+    +'<span class="chev">'+(open?"▾":"▸")+'</span><span>'+esc(label)+' ('+items.length+')</span></button>'
+    +(open?'<div class="pgroup-list">'+rows+more+'</div>':"")+'</div>';
+}
+function personRowHTML(idn){
+  const count=personCarryCount(idn);
+  const active=activePersons.has(idn.key);
+  const badge=count>0?'<span class="pcount" title="'+count+' items carried over">'+count+'</span>':"";
+  return '<button class="prow" aria-pressed="'+active+'" data-pkey="'+esc(idn.key)+'">'
+    +'<span class="pavatar" style="background:'+avatarColor(idn.canonical)+'" aria-hidden="true">'+esc(initialsOf(idn.canonical))+'</span>'
+    +'<span class="pname" title="'+esc(idn.canonical)+'">'+esc(idn.canonical)+'</span>'+badge+'</button>';
+}
+function mergeSuggestionsHTML(suggestions){
+  if(!suggestions.length)return "";
+  return suggestions.map(s=>
+    '<div class="pmerge"><div class="pmerge-q">Are these the same person? <b>'+esc(s.nameA)+'</b> / <b>'+esc(s.nameB)+'</b></div>'
+    +'<div class="pmerge-acts">'
+    +'<button data-merge="'+esc(s.keyA)+'|'+esc(s.keyB)+'">Merge</button>'
+    +'<button class="keep" data-keep="'+esc(s.keyA)+'|'+esc(s.keyB)+'">Keep separate</button>'
+    +'</div></div>').join("");
+}
+function wirePeoplePanel(){
+  document.querySelectorAll("[data-pkey]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.pkey;if(activePersons.has(k))activePersons.delete(k);else activePersons.add(k);renderAll();});
+  document.querySelectorAll("[data-pgtoggle]").forEach(b=>b.onclick=()=>{
+    peopleGroupOpen[b.dataset.pgtoggle]=!peopleGroupOpen[b.dataset.pgtoggle];renderNotes();});
+  document.querySelectorAll("[data-pmore]").forEach(b=>b.onclick=()=>{
+    peopleGroupShowAll[b.dataset.pmore]=!peopleGroupShowAll[b.dataset.pmore];renderNotes();});
+  document.querySelectorAll("[data-merge]").forEach(b=>b.onclick=()=>{
+    const [a,c]=b.dataset.merge.split("|");
+    mergeState.push({id:uid(),aliases:[a,c],decision:"merge"});save();renderAll();toast("Merged.");});
+  document.querySelectorAll("[data-keep]").forEach(b=>b.onclick=()=>{
+    const [a,c]=b.dataset.keep.split("|");
+    mergeState.push({id:uid(),aliases:[a,c],decision:"keep"});save();renderAll();});
+}
 
-  /* ----- subjects, grouped ----- */
+/* ---------- R2: subjects panel + R2-E flatten ---------- */
+function normLabel(s){return String(s||"").trim().toLowerCase()}
+function renderSubjectsPanel(){
+  const subjects={};
+  notesState.forEach(n=>{const s=n.meeting||"No subject";subjects[s]=(subjects[s]||0)+1});
   const sB=document.getElementById("tiles-subjects");
   const all=Object.keys(subjects).sort((a,b)=>subjects[b]-subjects[a]||a.localeCompare(b));
   const grouped=new Set(groupsState.flatMap(g=>g.subjects||[]));
@@ -957,67 +1247,43 @@ function renderNotes(){
   let h="";
   groupsState.forEach(g=>{
     const mine=all.filter(s=>(g.subjects||[]).includes(s));
+    const gNorm=normLabel(g.name);
+    /* R2-E: a child whose normalised label equals its parent's is redundant — its count folds
+       into the parent and it is not rendered as a separate child row. */
+    const distinct=mine.filter(s=>normLabel(s)!==gNorm);
     const count=groupCount(g,subjects);
-    h+='<div class="grp" data-grp="'+g.id+'">'
-      +'<div class="grphead droptarget" data-grpdrop="'+g.id+'" aria-pressed="'+(activeGroup===g.id)+'" tabindex="0">'
-      +'<span class="chev">'+(g.collapsed?"▶":"▼")+'</span>'
-      +'<span style="flex:1">'+esc(g.name)+'</span>'
-      +'<span class="n">'+count+'</span>'
-      +'<button class="rm" data-grprm="'+g.id+'" aria-label="Remove category" title="Remove category">×</button></div>';
-    if(!g.collapsed){
-      h+='<div class="grpkids">'+(mine.length
-        ? mine.map(s=>tileHTML(s,subjects[s],s===activeSubject,"subject",true)).join("")
-        : '<div class="tile-empty">Drop a subject here</div>')+'</div>';
+    const active=(g.subjects||[]).length>0 && (g.subjects||[]).every(s=>activeSubjects.has(s));
+    if(distinct.length<2){
+      /* fewer than 2 distinct children left after collapsing duplicates: flat row, no expand affordance */
+      h+='<div class="grphead droptarget" data-grpdrop="'+g.id+'" aria-pressed="'+active+'" tabindex="0">'
+        +'<span style="flex:1">'+esc(g.name)+'</span><span class="n">'+count+'</span>'
+        +'<button class="rm" data-grprm="'+g.id+'" aria-label="Remove category" title="Remove category">×</button></div>';
+    }else{
+      h+='<div class="grp" data-grp="'+g.id+'">'
+        +'<div class="grphead droptarget" data-grpdrop="'+g.id+'" aria-pressed="'+active+'" tabindex="0">'
+        +'<span class="chev">'+(g.collapsed?"▶":"▼")+'</span>'
+        +'<span style="flex:1">'+esc(g.name)+'</span>'
+        +'<span class="n">'+count+'</span>'
+        +'<button class="rm" data-grprm="'+g.id+'" aria-label="Remove category" title="Remove category">×</button></div>';
+      if(!g.collapsed){
+        h+='<div class="grpkids">'+distinct.map(s=>tileHTML(s,subjects[s],activeSubjects.has(s),"subject",true)).join("")+'</div>';
+      }
+      h+='</div>';
     }
-    h+='</div>';
   });
   if(groupsState.length && loose.length) h+='<div class="ungrp droptarget" data-grpdrop="">Ungrouped</div>';
-  h+=loose.map(s=>tileHTML(s,subjects[s],s===activeSubject,"subject",true)).join("");
+  h+=loose.map(s=>tileHTML(s,subjects[s],activeSubjects.has(s),"subject",true)).join("");
   sB.innerHTML = all.length ? h : '<div class="tile-empty">No subjects yet</div>';
   wireSubjectDnd();
-
-  /* ----- list ----- */
-  let list=notesState.filter(matchN);
-  if(activePerson)list=list.filter(n=>notePeople(n).includes(activePerson));
-  if(activeSubject)list=list.filter(n=>(n.meeting||"No subject")===activeSubject);
-  if(activeGroup){
-    const g=groupsState.find(x=>x.id===activeGroup);
-    const set=new Set(g?g.subjects||[]:[]);
-    list=list.filter(n=>set.has(n.meeting||"No subject"));
-  }
-
-  const box=document.getElementById("notecards");
-  if(!notesState.length){
-    box.innerHTML='<div class="zero"><h3>No notes yet</h3>'
-      +'<p>Notes arrive with your actions when a meeting is imported from Claude. People and subjects build themselves from there.</p>'
-      +'<button class="btn" id="zNote">Write one by hand</button></div>';
-    document.getElementById("zNote").onclick=()=>openNote(null);
-    return;
-  }
-  box.innerHTML="";
-  if(!list.length){box.innerHTML='<div class="empty">Nothing matches. Try clearing the filters.</div>'}
-  else{
-    const prep=list.filter(n=>n.status==="prep").sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
-    const held=list.filter(n=>n.status!=="prep").sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-    let out="";
-    if(prep.length)out+='<div class="prephead">Coming up</div>'+prep.map(n=>noteCardHTML(n,true)).join("");
-    if(held.length)out+=(prep.length?'<div class="prephead heldhead">History</div>':"")
-      +held.map(n=>noteCardHTML(n,false)).join("");
-    box.innerHTML=out;
-  }
-  document.querySelectorAll(".nc-more").forEach(el=>el.onclick=()=>{
-    const ul=el.closest(".notecard").querySelector(".nc-list");
-    const hidden=ul.querySelectorAll("li.hid").length>0;
-    ul.querySelectorAll("li").forEach((li,i)=>{if(i>=5)li.classList.toggle("hid",!hidden)});
-    el.textContent=hidden?"Show less":"Show all "+ul.children.length;
-  });
-  hydrateImages();
 }
-
+function tileHTML(n,c,act,kind,drag){
+  return '<button class="tile" aria-pressed="'+act+'"'+(drag?' draggable="true"':'')+' data-'+kind+'="'+esc(n)+'">'
+    +'<span>'+esc(n)+'</span><span class="n">'+c+'</span></button>';
+}
 function wireSubjectDnd(){
   document.querySelectorAll(".tile[data-subject]").forEach(el=>{
-    el.onclick=()=>{activeSubject=activeSubject===el.dataset.subject?"":el.dataset.subject;
-      activeGroup="";renderAll()};
+    el.onclick=()=>{const s=el.dataset.subject;
+      if(activeSubjects.has(s))activeSubjects.delete(s);else activeSubjects.add(s);renderAll()};
     el.addEventListener("dragstart",e=>{dragSubject=el.dataset.subject;el.classList.add("dragging");
       e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","subject:"+dragSubject)});
     el.addEventListener("dragend",()=>{el.classList.remove("dragging");dragSubject=null;
@@ -1051,20 +1317,27 @@ function wireSubjectDnd(){
   });
 
   document.querySelectorAll(".grphead").forEach(el=>{
-    el.addEventListener("click",e=>{
+    el.setAttribute("role","button");
+    const activate=e=>{
       if(e.target.closest("[data-grprm]"))return;
       const id=el.dataset.grpdrop;
-      if(e.target.closest(".chev")){
+      if(e.target.closest&&e.target.closest(".chev")){
         const g=groupsState.find(x=>x.id===id);g.collapsed=!g.collapsed;save();renderAll();return;
       }
-      activeGroup=activeGroup===id?"":id;activeSubject="";renderAll();
-    });
+      /* R2-A: category rows are a shorthand — toggle all of the category's member subjects at once */
+      const g=groupsState.find(x=>x.id===id);if(!g)return;
+      const mine=g.subjects||[];
+      const allActive=mine.length&&mine.every(s=>activeSubjects.has(s));
+      mine.forEach(s=>{if(allActive)activeSubjects.delete(s);else activeSubjects.add(s)});
+      renderAll();
+    };
+    el.addEventListener("click",activate);
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();activate(e)}});
   });
   document.querySelectorAll("[data-grprm]").forEach(b=>b.onclick=e=>{
     e.stopPropagation();
     const i=groupsState.findIndex(g=>g.id===b.dataset.grprm);if(i<0)return;
     const removed=groupsState[i];groupsState.splice(i,1);
-    if(activeGroup===removed.id)activeGroup="";
     save();renderAll();
     toastUndo("Category “"+removed.name+"” removed",()=>{
       groupsState.splice(Math.min(i,groupsState.length),0,removed);save();renderAll()});
@@ -1077,75 +1350,209 @@ document.getElementById("newGroup").onclick=()=>{
   groupsState.push({id:uid(),name:name.trim(),subjects:[],collapsed:false});
   save();setTab("notes");toast("Drag subjects into it.");
 };
-function tileHTML(n,c,act,kind,drag){
-  return '<button class="tile" aria-pressed="'+act+'"'+(drag?' draggable="true"':'')+' data-'+kind+'="'+esc(n)+'">'
-    +'<span>'+esc(n)+'</span><span class="n">'+c+'</span></button>';
-}
 function niceDate(s){const d=dueInfo(s);if(!s)return"";const p=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if(!p)return s;const dt=new Date(+p[1],+p[2]-1,+p[3]);
   return dt.getDate()+" "+MON[dt.getMonth()]+" "+dt.getFullYear()}
-/* live brief on a prep card: open actions on the subject + open questions from the last held meeting */
-function carryOverHTML(n){
-  if(!n.meeting)return "";
+
+/* ---------- R2: filter chip bar ---------- */
+function renderChipBar(){
+  const bar=document.getElementById("chipBar");
+  if(!activePersons.size&&!activeSubjects.size){bar.innerHTML="";return}
+  const {identities}=buildIdentities();
+  const chips=[];
+  activePersons.forEach(key=>{
+    const idn=identities.find(x=>x.key===key);
+    const label=idn?idn.canonical:key;
+    chips.push('<span class="chip">Person: '+esc(label)
+      +'<button data-chiprm="person:'+esc(key)+'" aria-label="Remove filter Person: '+esc(label)+'">×</button></span>');
+  });
+  activeSubjects.forEach(s=>{
+    chips.push('<span class="chip">Subject: '+esc(s)
+      +'<button data-chiprm="subject:'+esc(s)+'" aria-label="Remove filter Subject: '+esc(s)+'">×</button></span>');
+  });
+  bar.innerHTML=chips.join("")+'<button class="lnk" id="chipClearAll">Clear all</button>';
+  bar.querySelectorAll("[data-chiprm]").forEach(b=>b.onclick=()=>{
+    const raw=b.dataset.chiprm,i=raw.indexOf(":"),kind=raw.slice(0,i),val=raw.slice(i+1);
+    if(kind==="person")activePersons.delete(val);else activeSubjects.delete(val);
+    renderAll();
+  });
+  document.getElementById("chipClearAll").onclick=()=>{activePersons.clear();activeSubjects.clear();renderAll()};
+}
+
+/* ---------- R3/R4: card data + rendering ---------- */
+/* structured "to carry over" data for a Prep card: open actions on the subject + open questions
+   from the last held meeting on that subject. TODO(decision): "oldest date raised first" is
+   approximated via each action's own `date` (its import/capture date), falling back to `due`,
+   since no dedicated "raised" timestamp is stored on actions. */
+function carryOverData(n){
+  if(!n.meeting)return {actions:[],questions:[],lastHeldDate:""};
   const key=subjectKey(n.meeting);
   const sameSubj=s=>subjectKey(s)===key;
-  const openActs=state.filter(a=>a.col!=="done"&&sameSubj(a.meeting));
+  const openActs=state.filter(a=>a.col!=="done"&&!a.archived&&sameSubj(a.meeting))
+    .slice().sort((a,b)=>(a.date||a.due||"").localeCompare(b.date||b.due||""));
   const past=notesState.filter(m=>m.id!==n.id&&m.status!=="prep"&&sameSubj(m.meeting))
     .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   const lastHeld=past[0];
   const openQs=[];
   if(lastHeld)noteBullets(lastHeld).forEach(bb=>{const p=parseBullet(bb);
     if(p.text&&/^q(uestion)?\s*:/i.test(p.text))openQs.push(p.text.replace(/^q(uestion)?\s*:\s*/i,""))});
-  if(!openActs.length&&!openQs.length)return "";
-  let h='<div class="carry"><div class="carry-h">To carry over</div>';
-  if(openActs.length){
-    h+='<div class="carry-sub">Open actions ('+openActs.length+')</div><ul class="carry-list">'
-      +openActs.map(a=>{const d=dueInfo(a.due);
-        return '<li><button class="carry-go" data-goaction="'+a.id+'" title="Go to this action">'+hl(a.summary)+'</button>'
-          +(a.owner?' · <span class="carry-meta">'+esc(a.owner)+'</span>':'')
-          +(d?' · <span class="carry-meta">'+esc(d.label)+'</span>':'')+'</li>'}).join("")
-      +'</ul>';
-  }
-  if(openQs.length){
-    h+='<div class="carry-sub">Open questions'+(lastHeld.date?' — '+niceDate(lastHeld.date):'')+'</div>'
-      +'<ul class="carry-list q">'+openQs.map(t=>'<li>'+hl(t)+'</li>').join("")+'</ul>';
-  }
-  return h+'</div>';
+  return {actions:openActs,questions:openQs,lastHeldDate:lastHeld?lastHeld.date:""};
 }
-function noteCardHTML(n,isPrep){
-  const bl=noteBullets(n);
-  const lis=bl.length?bl.map((b,i)=>{
-    const p=parseBullet(b);
-    if(!p.text)return "";
-    let cls="d"+p.depth;
-    if(p.head)cls+=" hd";
-    else if(/^decision\s*:/i.test(p.text))cls+=" dec";
-    else if(/^question\s*:/i.test(p.text))cls+=" q";
-    if(i>=5)cls+=" hid";
-    const mk=p.head?"":'<button class="li-act" data-mkaction="'+n.id+'" data-line="'+i+'" title="Turn into an action" aria-label="Turn into an action">→</button>';
-    return '<li class="'+cls+'">'+hl(p.text)+mk+'</li>';
-  }).join("")
-    :'<li style="color:var(--ink-3)"><em>No content.</em></li>';
-  const more=bl.length>5?'<button class="lnk nc-more">Show all '+bl.length+'</button>':"";
+/* R4-F: collapsed-state item text — single line, ~90 char cap, leading numbering stripped. Full
+   verbatim text is preserved (used for the expanded state and the hover title). */
+function normalizeCollapsedText(t){
+  let s=String(t||"").replace(/\s+/g," ").trim().replace(/^\d+[.)]\s+/,"");
+  return s.length>90?s.slice(0,89)+"…":s;
+}
+/* R3-B sort for Coming Up: overdue first (most overdue at top), then due today, then upcoming
+   ascending, then undated last. */
+function comingUpSort(a,b){
+  const rank=s=>!s?3:s.cls==="s-overdue"?0:s.cls==="s-today"?1:2;
+  const ra=rank(statusBadgeInfo(a.date)), rb=rank(statusBadgeInfo(b.date));
+  if(ra!==rb)return ra-rb;
+  if(ra===0||ra===2)return (a.date||"").localeCompare(b.date||"");
+  return 0;
+}
+function noteCard2HTML(n,isPrep,expandedId){
+  const isExpanded=n.id===expandedId;
+  const carry=isPrep?carryOverData(n):{actions:[],questions:[],lastHeldDate:""};
+  const ownBullets=noteBullets(n);
+  const parsed=ownBullets.map((b,i)=>({p:parseBullet(b),i}));
+  const plain=parsed.filter(x=>x.p.text&&!x.p.head);
+  const decisions=plain.filter(x=>/^decision\s*:/i.test(x.p.text));
+  const notesOnly=plain.filter(x=>!/^decision\s*:/i.test(x.p.text));
+
+  const typeLabel=isPrep?"Prep":"Note", typeCls=isPrep?"t-prep":"t-note";
+  const status=isPrep?statusBadgeInfo(n.date):null;
+
   const ppl=notePeople(n);
-  const d=isPrep?dueInfo(n.date):null;
-  const when=isPrep?(d?d.label:"no date set"):niceDate(n.date);
-  const sub=[ppl.length?ppl.join(", "):"no one recorded", when].filter(Boolean).join(" · ");
-  const acts=linkedActions(n);
-  const link=acts.length?'<button class="lnk" data-to-actions="'+esc(n.meeting||"")+'">'+acts.length+" action"+(acts.length>1?"s":"")+'</button>':"";
-  const badge=isPrep?'<span class="badge-prep">Prep</span>':"";
+  const metaPpl=ppl.length?oneLine(ppl.join(", "),60):"no one recorded";
+  const metaDate=n.date?niceDate(n.date):(isPrep?"no date set":"");
+  const meta=[metaPpl,metaDate].filter(Boolean).join(" · ");
+
+  const countsParts=[];
+  if(carry.actions.length)countsParts.push(carry.actions.length+" action"+(carry.actions.length>1?"s":"")+" carried over");
+  if(carry.questions.length)countsParts.push(carry.questions.length+" question"+(carry.questions.length>1?"s":""));
+  if(notesOnly.length)countsParts.push(notesOnly.length+" note"+(notesOnly.length>1?"s":""));
+  const countsLine=countsParts.length?'<div class="nc-counts">'+countsParts.join(" · ")+'</div>':"";
+
+  const items=[];
+  carry.actions.forEach(a=>items.push(a.summary));
+  carry.questions.forEach(q=>items.push(q));
+  notesOnly.forEach(x=>items.push(x.p.text));
+  const top2=items.slice(0,2).map(t=>
+    '<div class="nc-top2-item" title="'+esc(t)+'">'+hl(normalizeCollapsedText(t))+'</div>').join("");
+
+  let body="";
+  if(carry.actions.length){
+    body+='<h4>Carried over — actions</h4><ul class="carry-list">'+carry.actions.map(a=>{
+      const d=dueInfo(a.due);
+      return '<li><button class="carry-go" data-goaction="'+a.id+'" title="Go to this action">'+hl(a.summary)+'</button>'
+        +(a.owner?' · <span class="carry-meta">'+esc(a.owner)+'</span>':"")
+        +(d?' · <span class="carry-meta">'+esc(d.label)+'</span>':"")+'</li>';
+    }).join("")+'</ul>';
+  }
+  if(carry.questions.length){
+    body+='<h4>Carried over — questions'+(carry.lastHeldDate?' — '+niceDate(carry.lastHeldDate):"")+'</h4>'
+      +'<ul class="carry-list q">'+carry.questions.map(t=>'<li>'+hl(t)+'</li>').join("")+'</ul>';
+  }
+  body+='<h4>Notes</h4>';
+  if(notesOnly.length){
+    body+='<ul class="nc-list">'+notesOnly.map(x=>{
+      let cls="d"+x.p.depth;if(/^question\s*:/i.test(x.p.text))cls+=" q";
+      const mk='<button class="li-act" data-mkaction="'+n.id+'" data-line="'+x.i+'" title="Turn into an action" aria-label="Turn into an action">→</button>';
+      return '<li class="'+cls+'">'+hl(x.p.text)+mk+'</li>';
+    }).join("")+'</ul>';
+  }else body+='<div class="empty-sub">No content.</div>';
+  if(decisions.length){
+    body+='<h4>Decisions</h4><ul class="nc-list">'+decisions.map(x=>'<li class="dec">'+hl(x.p.text)+'</li>').join("")+'</ul>';
+  }
   const imgs=Array.isArray(n.images)?n.images:[];
-  const imgHTML=imgs.length?'<div class="nc-imgs">'+imgs.map(ref=>ref.slice(0,5)==="data:"
-    ?'<img class="nc-img" src="'+esc(ref)+'" data-lightbox="'+esc(ref)+'">'
-    :'<img class="nc-img" data-imgref="'+esc(ref)+'" data-lightbox="'+esc(ref)+'">').join("")+'</div>':"";
-  return '<article class="notecard'+(isPrep?" prep":"")+'">'
-    +'<div class="nc-top"><div class="nc-titlewrap"><span class="nc-title">'+hl(n.meeting||"No subject")+'</span>'+badge+'</div>'
-    +'<span class="sp"></span><button class="btn quiet tiny" data-edit-note="'+n.id+'">Edit</button></div>'
-    +'<div class="nc-sub">'+hl(sub)+'</div>'
-    +(isPrep?carryOverHTML(n):"")
-    +'<ul class="nc-list">'+lis+'</ul>'+imgHTML
-    +((more||link)?'<div class="nc-foot">'+more+link+'</div>':"")
+  if(imgs.length){
+    body+='<div class="nc-imgs">'+imgs.map(ref=>ref.slice(0,5)==="data:"
+      ?'<img class="nc-img" src="'+esc(ref)+'" data-lightbox="'+esc(ref)+'">'
+      :'<img class="nc-img" data-imgref="'+esc(ref)+'" data-lightbox="'+esc(ref)+'">').join("")+'</div>';
+  }
+  const acts=linkedActions(n);
+  if(acts.length){
+    body+='<div class="nc-foot"><button class="lnk" data-to-actions="'+esc(n.meeting||"")+'">'
+      +acts.length+" action"+(acts.length>1?"s":"")+'</button></div>';
+  }
+
+  const headId="nchead-"+n.id, bodyId="ncbody-"+n.id;
+  return '<article class="notecard'+(isPrep?" prep":"")+(isExpanded?" expanded":"")+'">'
+    +'<div class="nc-headrow">'
+    +'<button class="nc-head" id="'+headId+'" aria-expanded="'+isExpanded+'" aria-controls="'+bodyId+'" data-nctoggle="'+n.id+'">'
+    +'<span class="typebadge '+typeCls+'">'+typeLabel+'</span>'
+    +'<span class="nc-title" title="'+esc(n.meeting||"No subject")+'">'+hl(n.meeting||"No subject")+'</span>'
+    +(status?'<span class="statusbadge '+status.cls+'" title="'+esc(status.title)+'">'+esc(status.label)+'</span>':"")
+    +'<span class="nc-chev" aria-hidden="true">▸</span></button>'
+    +'<button class="btn quiet tiny nc-edit" data-edit-note="'+n.id+'">Edit</button>'
+    +'</div>'
+    +(meta?'<div class="nc-meta" title="'+esc(meta)+'">'+esc(meta)+'</div>':"")
+    +countsLine
+    +(top2?'<div class="nc-top2">'+top2+'</div>':"")
+    +'<div class="nc-bodywrap"><div class="nc-bodyinner"><div class="nc-body" id="'+bodyId+'" role="region" aria-labelledby="'+headId+'">'+body+'</div></div></div>'
     +'</article>';
+}
+function wireNoteCards(){
+  document.querySelectorAll("[data-nctoggle]").forEach(b=>{
+    b.onclick=()=>{
+      const id=b.dataset.nctoggle, inComing=!!b.closest(".notecol-coming");
+      if(inComing)expandedComing=expandedComing===id?null:id; else expandedHistory=expandedHistory===id?null:id;
+      renderNotes();
+    };
+  });
+}
+
+function renderNotes(){
+  if(transitionPreps())save();
+
+  renderPeoplePanel();
+  renderSubjectsPanel();
+  renderChipBar();
+
+  let list=notesState.filter(matchN);
+  if(activeSubjects.size)list=list.filter(n=>activeSubjects.has(n.meeting||"No subject"));
+  if(activePersons.size){
+    const {identities}=buildIdentities();
+    const selected=identities.filter(idn=>activePersons.has(idn.key));
+    list=list.filter(n=>{const pk=carryKeyOf(n);return selected.some(idn=>pk.some(k=>idn.namesNorm.has(k)))});
+  }
+
+  const filtersActive=activeSubjects.size||activePersons.size;
+  const rc=document.getElementById("resultCount");
+  if(filtersActive&&notesState.length){rc.style.display="";rc.textContent=list.length+" of "+notesState.length+" notes"}
+  else rc.style.display="none";
+
+  const comingBox=document.getElementById("col-coming"), historyBox=document.getElementById("col-history");
+  if(!notesState.length){
+    comingBox.innerHTML='<div class="zero"><h3>No notes yet</h3>'
+      +'<p>Notes arrive with your actions when a meeting is imported from Claude. People and subjects build themselves from there.</p>'
+      +'<button class="btn" id="zNote">Write one by hand</button></div>';
+    historyBox.innerHTML="";
+    const z=document.getElementById("zNote");if(z)z.onclick=()=>openNote(null);
+    return;
+  }
+  if(!list.length){
+    /* R2-D: empty state — no empty column, a short message plus Clear all */
+    comingBox.innerHTML='<div class="empty">No notes match these filters.'
+      +'<div style="margin-top:8px"><button class="btn quiet tiny" id="clrAllNotes">Clear all</button></div></div>';
+    historyBox.innerHTML="";
+    const c=document.getElementById("clrAllNotes");
+    if(c)c.onclick=()=>{activePersons.clear();activeSubjects.clear();setQuery("");renderAll()};
+    return;
+  }
+
+  const prep=list.filter(n=>n.status==="prep").sort(comingUpSort);
+  const held=list.filter(n=>n.status!=="prep").sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  comingBox.innerHTML=prep.length?prep.map(n=>noteCard2HTML(n,true,expandedComing)).join("")
+    :'<div class="empty">Nothing coming up.</div>';
+  historyBox.innerHTML=held.length?held.map(n=>noteCard2HTML(n,false,expandedHistory)).join("")
+    :'<div class="empty">No history yet.</div>';
+
+  wireNoteCards();
+  hydrateImages();
 }
 
 /* ---------- modals ---------- */
@@ -1155,7 +1562,10 @@ const actOv=document.getElementById("actOv"), noteOv=document.getElementById("no
 [actOv,noteOv,pasteOv,archiveOv].forEach(o=>o.addEventListener("click",e=>{if(e.target===o)closeOv(o)}));
 document.getElementById("archiveClose").onclick=()=>closeOv(archiveOv);
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){[actOv,noteOv,pasteOv,archiveOv].forEach(closeOv);document.getElementById("imgOv").classList.remove("open");closeMenus()}
+  if(e.key==="Escape"){
+    if(document.activeElement===document.getElementById("q")){clearTimeout(queryTimer);setQuery("");renderAll();updateQCount();return}
+    [actOv,noteOv,pasteOv,archiveOv].forEach(closeOv);document.getElementById("imgOv").classList.remove("open");closeMenus()
+  }
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();document.getElementById("q").focus()}
 });
 
@@ -1492,11 +1902,11 @@ document.getElementById("mRestore").onclick=()=>{
     r.onload=()=>{try{
       const d=JSON.parse(r.result);
       const acts=Array.isArray(d)?d:(d.actions||[]),nts=Array.isArray(d)?[]:(d.notes||[]),
-            grps=Array.isArray(d)?[]:(d.groups||[]);
+            grps=Array.isArray(d)?[]:(d.groups||[]),mgs=Array.isArray(d)?[]:(d.merges||[]);
       if(!Array.isArray(acts))throw 0;
       if(!confirm("Replace everything currently here ("+state.length+" actions, "+notesState.length+" notes) with this file ("+acts.length+" actions, "+nts.length+" notes)?"))return;
       state=acts.map(a=>Object.assign({summary:a.summary||a.action||"",detail:a.detail||a.note||""},a));
-      notesState=nts;groupsState=grps;save();renderAll();toast("Restored.");
+      notesState=nts;groupsState=grps;mergeState=mgs;save();renderAll();toast("Restored.");
     }catch(e){toast("Could not read that backup file.")}};
     r.readAsText(f)};
   inp.click();
@@ -1506,8 +1916,20 @@ document.getElementById("mRestore").onclick=()=>{
 const qEl=document.getElementById("q");
 function setQuery(v){query=String(v||"").trim().toLowerCase();qEl.value=v||"";
   document.getElementById("searchWrap").classList.toggle("filled",!!query)}
-qEl.addEventListener("input",()=>{setQuery(qEl.value);renderAll()});
-document.getElementById("qClear").onclick=()=>{setQuery("");renderAll();qEl.focus()};
+function updateQCount(){
+  const el=document.getElementById("qCount");
+  if(!query){el.style.display="none";return}
+  const n = tab==="notes" ? notesState.filter(matchN).length : state.filter(a=>!a.archived&&matchA(a)).length;
+  el.textContent=n+" result"+(n===1?"":"s");el.style.display="";
+}
+/* R5-C: debounce 250ms so search doesn't re-render on every keystroke */
+qEl.addEventListener("input",()=>{
+  const v=qEl.value;
+  document.getElementById("searchWrap").classList.toggle("filled",!!v.trim());
+  clearTimeout(queryTimer);
+  queryTimer=setTimeout(()=>{query=v.trim().toLowerCase();renderAll();updateQCount()},250);
+});
+document.getElementById("qClear").onclick=()=>{clearTimeout(queryTimer);setQuery("");renderAll();updateQCount();qEl.focus()};
 
 /* ---------- render all ---------- */
 function archiveOldDone(){
@@ -1538,6 +1960,7 @@ function renderAll(){if(archiveOldDone())save();renderStrip();renderBackupState(
 function migrate(){
   state.forEach(a=>{if(!a.summary){a.summary=oneLine(a.action||"",140);a.detail=a.detail||a.note||""}});
   notesState.forEach(n=>{if(!Array.isArray(n.bullets))n.bullets=noteBullets(n)});
+  transitionPreps();
 }
 migrate();
 save();
