@@ -3,6 +3,10 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v1.1.2 — 2026-09-17
+### Changed
+- Removed the "Person / Carried over" column header above the People panel in the Notes view — the panel now just shows the "People" heading and the tiles below it (each still carries its own carried-over count badge).
+
 ## v1.1.1 — 2026-09-17
 ### Fixed
 - **Collapsed note cards were squashed to a sliver** when a column held many notes: as flex children of a height-constrained column they shrank instead of keeping their 140px, leaving the title and content clipped mid-line. Cards now hold their height and the column scrolls.
