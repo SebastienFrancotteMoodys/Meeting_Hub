@@ -3,11 +3,11 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
-
 ## v1.2.0 — 2026-09-28
 ### Changed
 - **Click anywhere on a note card to expand/collapse it** in the Notes view — title, meta line, counts and preview lines all toggle the card, not just the small ▸ arrow. Cards show a pointer cursor and a subtle hover border.
 - Inner controls keep their own behaviour (Edit, → turn-into-action, carried-over action links, screenshots), selecting text never toggles, and clicks inside an expanded note body are ignored so you can read and select without it collapsing.
+
 ## v1.1.2 — 2026-09-17
 ### Changed
 - Removed the "Person / Carried over" column header above the People panel in the Notes view — the panel now just shows the "People" heading and the tiles below it (each still carries its own carried-over count badge).
