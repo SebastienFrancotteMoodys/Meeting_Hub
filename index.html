@@ -266,6 +266,9 @@
   .notecard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
     padding:12px 14px 13px;box-shadow:var(--shadow);position:relative;flex:0 0 auto}
   .notecard:not(.expanded){height:140px;overflow:hidden}
+  .notecard{cursor:pointer;transition:border-color .12s ease}
+  .notecard:hover{border-color:#C3D3E5}
+  .notecard.expanded .nc-body{cursor:auto}
   .notecard.prep{border-left:3px solid var(--accent);background:#FCFDFE}
   .nc-headrow{display:flex;align-items:center;gap:6px}
   .nc-head{display:flex;align-items:center;gap:7px;min-width:0;flex:1;background:transparent;border:0;
@@ -570,7 +573,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="1.1.2";
+const APP_VERSION="1.2.0";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1", MERGE_KEY="meeting-merges-v1";
 const COLS=["todo","doing","done"];
@@ -1479,7 +1482,7 @@ function noteCard2HTML(n,isPrep,expandedId){
   }
 
   const headId="nchead-"+n.id, bodyId="ncbody-"+n.id;
-  return '<article class="notecard'+(isPrep?" prep":"")+(isExpanded?" expanded":"")+'">'
+  return '<article class="notecard'+(isPrep?" prep":"")+(isExpanded?" expanded":"")+'" data-ncid="'+n.id+'">'
     +'<div class="nc-headrow">'
     +'<button class="nc-head" id="'+headId+'" aria-expanded="'+isExpanded+'" aria-controls="'+bodyId+'" data-nctoggle="'+n.id+'">'
     +'<span class="typebadge '+typeCls+'">'+typeLabel+'</span>'
@@ -1494,10 +1497,17 @@ function noteCard2HTML(n,isPrep,expandedId){
     +'<div class="nc-bodywrap"><div class="nc-bodyinner"><div class="nc-body" id="'+bodyId+'" role="region" aria-labelledby="'+headId+'">'+body+'</div></div></div>'
     +'</article>';
 }
+/* Click anywhere on a card toggles it (the header button still carries keyboard/ARIA). Inner controls
+   (Edit, →, action links, images) keep their own behaviour, a text selection never toggles, and once
+   expanded, clicks inside the body are ignored so the note can be read/selected without collapsing. */
 function wireNoteCards(){
-  document.querySelectorAll("[data-nctoggle]").forEach(b=>{
-    b.onclick=()=>{
-      const id=b.dataset.nctoggle, inComing=!!b.closest(".notecol-coming");
+  document.querySelectorAll(".notecard[data-ncid]").forEach(card=>{
+    card.onclick=e=>{
+      if(e.target.closest("button:not(.nc-head),a,input,textarea,select,img"))return;
+      const sel=window.getSelection();
+      if(sel&&!sel.isCollapsed&&card.contains(sel.anchorNode))return;
+      if(card.classList.contains("expanded")&&e.target.closest(".nc-body"))return;
+      const id=card.dataset.ncid, inComing=!!card.closest(".notecol-coming");
       if(inComing)expandedComing=expandedComing===id?null:id; else expandedHistory=expandedHistory===id?null:id;
       renderNotes();
     };
