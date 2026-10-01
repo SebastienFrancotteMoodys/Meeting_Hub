@@ -3,6 +3,11 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v1.3.0 — 2026-10-01
+### Added
+- **Jira key on action tiles**: an action can carry a Jira ticket key (e.g. DERTB-123), shown as a clickable chip on the tile that opens the ticket. Editable in the action Edit form (new "Jira ticket" field) and searchable.
+- **Inbox `mode:"link-jira"`**: `{mode, meeting, links:[{summary, jira}]}` attaches keys to existing actions (matched on summary + meeting); imported actions may also carry a `jira` field.
+
 ## v1.2.0 — 2026-09-28
 ### Changed
 - **Click anywhere on a note card to expand/collapse it** in the Notes view — title, meta line, counts and preview lines all toggle the card, not just the small ▸ arrow. Cards show a pointer cursor and a subtle hover border.

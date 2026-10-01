@@ -132,6 +132,8 @@
   .when.late{color:var(--red);font-weight:600}
   .src{background:transparent;border:0;padding:0;color:var(--ink-3);cursor:pointer;font-size:12.5px;
     text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+  .jira{display:inline-block;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid #D3DEEC;border-radius:20px;padding:0 8px;text-decoration:none;font-variant-numeric:tabular-nums}
+  .jira:hover{background:#DCE7F4;text-decoration:underline}
   .src:hover{color:var(--accent);text-decoration-color:currentColor}
   .confirmbar{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:9px;border-top:1px solid var(--amber-line);
     font-size:12.5px;color:var(--amber)}
@@ -514,6 +516,7 @@
       <div class="f"><label for="fOwner">Owner</label><input type="text" id="fOwner" placeholder="Leave empty if unknown"></div>
       <div class="f"><label for="fDue">Due date</label><input type="date" id="fDue"></div>
     </div>
+    <div class="f"><label for="fJira">Jira ticket</label><input type="text" id="fJira" placeholder="e.g. DERTB-123"></div>
     <div class="f"><label for="fMeeting">Meeting</label><input type="text" id="fMeeting" list="meetingList">
       <datalist id="meetingList"></datalist></div>
     <div class="f"><label class="chk"><input type="checkbox" id="fConfirm">
@@ -573,7 +576,8 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="1.2.0";
+const APP_VERSION="1.3.0";
+const JIRA_BASE="https://moodysanalytics.atlassian.net/browse/";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1", MERGE_KEY="meeting-merges-v1";
 const COLS=["todo","doing","done"];
@@ -989,7 +993,7 @@ function transitionPreps(){
 }
 
 /* ---------- search ---------- */
-function hay(a){return [a.summary,a.detail,a.owner,a.meeting].join(" ").toLowerCase()}
+function hay(a){return [a.summary,a.detail,a.owner,a.meeting,a.jira].join(" ").toLowerCase()}
 /* R5-C: search covers note bodies, titles, participants, and the text of linked actions/questions */
 function noteHay(n){
   const acts=linkedActions(n).flatMap(a=>[a.summary,a.detail,a.owner]);
@@ -1063,6 +1067,7 @@ function cardHTML(a){
   const who=a.owner?'<span class="who">'+hl(a.owner)+'</span>':'<span class="who none">no owner</span>';
   const star='<button class="star'+(a.focus?" on":"")+'" data-focus="'+a.id+'" title="'+(a.focus?"Remove from Focus":"Add to Focus")+'" aria-label="Toggle focus">★</button>';
   const when=d?'<span class="when '+d.cls+'">'+esc(d.label)+'</span>':"";
+  const jira=a.jira?'<a class="jira" href="'+JIRA_BASE+encodeURIComponent(a.jira)+'" target="_blank" rel="noopener" title="Open in Jira">'+esc(a.jira)+'</a>':"";
   const src=a.meeting?'<button class="src" data-src="'+esc(a.meeting)+'">'+hl(a.meeting)+'</button>':"";
   const conf=a.confirm?'<div class="confirmbar"><span>Needs confirming</span><span class="sp"></span>'
     +'<button data-confirm="'+a.id+'">Confirm</button></div>':"";
@@ -1076,7 +1081,7 @@ function cardHTML(a){
     +'" draggable="true" data-id="'+a.id+'" tabindex="0">'
     +'<button class="del" data-del="'+a.id+'" aria-label="Delete this action" title="Delete">×</button>'
     +'<div class="summary">'+hl(a.summary)+'</div>'
-    +'<div class="row2">'+star+who+(when?'<span style="color:var(--line)">·</span>'+when:"")+(src?'<span class="sp"></span>'+src:"")+'</div>'
+    +'<div class="row2">'+star+who+(when?'<span style="color:var(--line)">·</span>'+when:"")+(jira?'<span style="color:var(--line)">·</span>'+jira:"")+(src?'<span class="sp"></span>'+src:"")+'</div>'
     +conf+det
     +'<div class="cardacts">'+left+right+top+'<span class="sp"></span>'
     +'<button class="btn quiet tiny" data-edit="'+a.id+'">Edit</button></div></article>';
@@ -1087,7 +1092,7 @@ function wireCards(){
     el.addEventListener("dragstart",e=>{dragId=el.dataset.id;el.classList.add("dragging");
       e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",dragId)});
     el.addEventListener("dragend",()=>{el.classList.remove("dragging");dragId=null;clearGhost()});
-    el.addEventListener("click",e=>{if(e.target.closest("button"))return;
+    el.addEventListener("click",e=>{if(e.target.closest("button,a"))return;
       openCard=openCard===el.dataset.id?null:el.dataset.id;renderBoard()});
     el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();
       openCard=openCard===el.dataset.id?null:el.dataset.id;renderBoard()}});
@@ -1587,6 +1592,7 @@ function openAct(id,prefill){
   document.getElementById("fDetail").value=editing?editing.detail||"":(pre.detail||"");
   document.getElementById("fOwner").value=editing?editing.owner||"":(pre.owner||"");
   document.getElementById("fDue").value=editing?editing.due||"":"";
+  document.getElementById("fJira").value=editing?editing.jira||"":"";
   document.getElementById("fMeeting").value=editing?editing.meeting||"":(pre.meeting||"");
   document.getElementById("fConfirm").checked=editing?!!editing.confirm:false;
   document.getElementById("aDelete").style.display=editing?"":"none";
@@ -1601,6 +1607,7 @@ document.getElementById("aSave").onclick=()=>{
   if(!s){toast("A summary is required.");document.getElementById("fSummary").focus();return}
   const v={summary:oneLine(s,140),detail:document.getElementById("fDetail").value.trim(),
     owner:document.getElementById("fOwner").value.trim(),due:document.getElementById("fDue").value,
+    jira:document.getElementById("fJira").value.trim().toUpperCase(),
     meeting:document.getElementById("fMeeting").value.trim(),confirm:document.getElementById("fConfirm").checked};
   if(editing){Object.assign(editing,v);}
   else{
@@ -1729,6 +1736,18 @@ function importRaw(raw,viaClip){
   try{data=JSON.parse(raw.replace(/^```(?:json)?/,"").replace(/```$/,"").trim())}
   catch(err){openOv(pasteOv);document.getElementById("pasteText").value=raw;
     document.getElementById("pasteHint").textContent="That was not valid JSON. Check the block is complete.";return}
+  /* mode:"link-jira" — attach Jira keys to EXISTING actions: {mode, links:[{summary, meeting, jira}]} (match = summary|meeting) */
+  if(!Array.isArray(data)&&String(data.mode||"").trim().toLowerCase()==="link-jira"){
+    let n=0,miss=0;
+    (data.links||[]).forEach(l=>{
+      const k=fp({summary:l.summary,meeting:l.meeting||data.meeting});
+      const t=state.find(a=>fp(a)===k);
+      if(t&&l.jira){t.jira=String(l.jira).trim().toUpperCase();n++}else miss++;
+    });
+    if(n){save();closeOv(pasteOv);document.getElementById("pasteText").value="";renderAll()}
+    toast(n+" Jira key"+(n===1?"":"s")+" linked"+(miss?" · "+miss+" action"+(miss===1?"":"s")+" not found":""));
+    return;
+  }
   const list=Array.isArray(data)?data:(data.actions||[]);
   const seen=new Set(state.map(fp));let added=0,dupes=0;
   list.forEach(x=>{
@@ -1738,6 +1757,7 @@ function importRaw(raw,viaClip){
       owner:String(x.owner||"").trim(),due:String(x.due||"").trim(),
       meeting:String(x.meeting||data.meeting||"").trim(),date:String(x.date||data.date||"").trim(),
       confirm:x.confirm===true,col:"todo"};
+    if(x.jira)a.jira=String(x.jira).trim().toUpperCase();
     if(!a.summary)return;
     const k=fp(a);if(seen.has(k)){dupes++;return}
     seen.add(k);state.push(a);added++;
