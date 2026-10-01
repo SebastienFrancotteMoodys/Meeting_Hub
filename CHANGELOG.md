@@ -3,6 +3,12 @@
 All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
+## v1.4.0 — 2026-10-01
+### Changed
+- **Notes layout**: "Coming up" is now a horizontal strip of compact tiles above "History". A calendar icon with a count shows when something is coming; clicking a tile grows it to full width, clicking again collapses it.
+- **History** now takes the full width below, with no inner scroll.
+- **Brighter blue accent** (`#1F5FBF`) for badges, selected filters and buttons.
+
 ## v1.3.0 — 2026-10-01
 ### Added
 - **Jira key on action tiles**: an action can carry a Jira ticket key (e.g. DERTB-123), shown as a clickable chip on the tile that opens the ticket. Editable in the action Edit form (new "Jira ticket" field) and searchable.
