@@ -4,6 +4,8 @@ All notable changes to Meeting Hub are documented here.
 Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATCH.
 
 ## v1.4.0 — 2026-10-01
+### Added
+- **Subject entity resolution**: near-duplicate meeting subjects (e.g. "Shari - Synch" / "shari synch" / "Shari - Sync") are suggested at the top of the Subjects panel with Merge / Keep separate. Nothing is merged without your answer; a merge renames matching notes, actions and categories (Undo available) and also applies to future imports.
 ### Changed
 - **Notes layout**: "Coming up" is now a horizontal strip of compact tiles above "History". A calendar icon with a count shows when something is coming; clicking a tile grows it to full width, clicking again collapses it.
 - **History** now takes the full width below, with no inner scroll.

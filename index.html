@@ -1252,6 +1252,91 @@ function wirePeoplePanel(){
 
 /* ---------- R2: subjects panel + R2-E flatten ---------- */
 function normLabel(s){return String(s||"").trim().toLowerCase()}
+
+/* ---------- subject entity resolution ----------
+   "Shari - Synch" / "shari synch" / "Shari Sync" are probably one recurring meeting. Likely duplicates are
+   SUGGESTED in the Subjects panel and only merged when the user says so. A decision is stored in mergeState
+   (kind:"subject"); applySubjectMerges() then renames every matching note/action/category to the canonical
+   subject — also for future imports, since it runs on every render. */
+function normSubject(s){return String(s||"").toLowerCase().replace(/[\s\-–—_:.,\/]+/g," ").trim()}
+function editDist(a,b){
+  if(a===b)return 0;if(Math.abs(a.length-b.length)>2)return 3;
+  let p=[...Array(b.length+1).keys()];
+  for(let i=1;i<=a.length;i++){const c=[i];
+    for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));
+    p=c}
+  return p[b.length];
+}
+function subjectDecisions(){return mergeState.filter(m=>m.kind==="subject")}
+function subjectAliasMap(){
+  const map=new Map();
+  subjectDecisions().filter(m=>m.decision==="merge").forEach(m=>(m.names||[]).forEach(n=>{
+    const k=normSubject(n);if(k)map.set(k,m.canonical)}));
+  return map;
+}
+function applySubjectMerges(){
+  const map=subjectAliasMap();if(!map.size)return false;
+  let changed=false;
+  const fix=a=>{const c=map.get(normSubject(a.meeting));if(c&&a.meeting!==c){a.meeting=c;changed=true}};
+  notesState.forEach(fix);state.forEach(fix);
+  groupsState.forEach(g=>{
+    const next=[...new Set((g.subjects||[]).map(s=>map.get(normSubject(s))||s))];
+    if(next.length!==(g.subjects||[]).length||next.some((s,i)=>s!==g.subjects[i])){g.subjects=next;changed=true}
+  });
+  const act=[...activeSubjects].map(s=>map.get(normSubject(s))||s);
+  if(act.some(s=>!activeSubjects.has(s))||act.length!==activeSubjects.size){activeSubjects=new Set(act);changed=true}
+  return changed;
+}
+let subjectSuggestions=[];
+function findSubjectSuggestions(counts){
+  const names=Object.keys(counts).filter(s=>s!=="No subject"&&normSubject(s));
+  const out=[];
+  for(let i=0;i<names.length;i++)for(let j=i+1;j<names.length;j++){
+    const a=names[i],b=names[j],na=normSubject(a),nb=normSubject(b);
+    const sameDigits=na.replace(/\D/g,"")===nb.replace(/\D/g,"");
+    const lim=Math.min(na.length,nb.length)>=12?2:1;
+    const close=na===nb||(sameDigits&&Math.min(na.length,nb.length)>=6&&editDist(na,nb)<=lim);
+    if(!close)continue;
+    const pair=[na,nb];
+    if(subjectDecisions().some(m=>m.decision&&sameSet((m.names||[]).map(normSubject),pair)))continue;
+    out.push({a,b});
+  }
+  return out;
+}
+function subjectCanonical(sg,counts){
+  const ca=counts[sg.a]||0,cb=counts[sg.b]||0;
+  if(ca!==cb)return ca>cb?sg.a:sg.b;
+  const hy=s=>/\s-\s/.test(s);
+  if(hy(sg.a)!==hy(sg.b))return hy(sg.a)?sg.a:sg.b;
+  return sg.a.length>=sg.b.length?sg.a:sg.b;
+}
+function subjectSuggestionsHTML(counts){
+  subjectSuggestions=findSubjectSuggestions(counts).map(sg=>({...sg,canonical:subjectCanonical(sg,counts)}));
+  return subjectSuggestions.map((sg,i)=>
+    '<div class="pmerge"><div class="pmerge-q">Same meeting subject? <b>'+esc(sg.a)+'</b> / <b>'+esc(sg.b)+'</b></div>'
+    +'<div class="pmerge-acts"><button data-smerge="'+i+'">Merge</button>'
+    +'<button class="keep" data-skeep="'+i+'">Keep separate</button></div></div>').join("");
+}
+function doSubjectMerge(sg){
+  const keys=new Set([normSubject(sg.a),normSubject(sg.b)]);
+  const hit=a=>keys.has(normSubject(a.meeting));
+  const prevN=notesState.filter(hit).map(n=>[n,n.meeting]), prevA=state.filter(hit).map(a=>[a,a.meeting]);
+  const prevG=JSON.stringify(groupsState), prevS=[...activeSubjects];
+  const entry={id:uid(),kind:"subject",names:[sg.a,sg.b],canonical:sg.canonical,decision:"merge"};
+  mergeState.push(entry);applySubjectMerges();save();renderAll();
+  toastUndo("Merged into “"+sg.canonical+"”",()=>{
+    prevN.forEach(([n,m])=>n.meeting=m);prevA.forEach(([a,m])=>a.meeting=m);
+    groupsState=JSON.parse(prevG);activeSubjects=new Set(prevS);
+    mergeState=mergeState.filter(m=>m!==entry);save();renderAll();toast("Restored.");
+  });
+}
+function wireSubjectMerges(){
+  document.querySelectorAll("[data-smerge]").forEach(b=>b.onclick=()=>doSubjectMerge(subjectSuggestions[+b.dataset.smerge]));
+  document.querySelectorAll("[data-skeep]").forEach(b=>b.onclick=()=>{
+    const sg=subjectSuggestions[+b.dataset.skeep];
+    mergeState.push({id:uid(),kind:"subject",names:[sg.a,sg.b],decision:"keep"});save();renderAll();});
+}
+
 function renderSubjectsPanel(){
   const subjects={};
   notesState.forEach(n=>{const s=n.meeting||"No subject";subjects[s]=(subjects[s]||0)+1});
@@ -1259,7 +1344,7 @@ function renderSubjectsPanel(){
   const all=Object.keys(subjects).sort((a,b)=>subjects[b]-subjects[a]||a.localeCompare(b));
   const grouped=new Set(groupsState.flatMap(g=>g.subjects||[]));
   const loose=all.filter(s=>!grouped.has(s));
-  let h="";
+  let h=subjectSuggestionsHTML(subjects);
   groupsState.forEach(g=>{
     const mine=all.filter(s=>(g.subjects||[]).includes(s));
     const gNorm=normLabel(g.name);
@@ -1290,6 +1375,7 @@ function renderSubjectsPanel(){
   h+=loose.map(s=>tileHTML(s,subjects[s],activeSubjects.has(s),"subject",true)).join("");
   sB.innerHTML = all.length ? h : '<div class="tile-empty">No subjects yet</div>';
   wireSubjectDnd();
+  wireSubjectMerges();
 }
 function tileHTML(n,c,act,kind,drag){
   return '<button class="tile" aria-pressed="'+act+'"'+(drag?' draggable="true"':'')+' data-'+kind+'="'+esc(n)+'">'
@@ -1994,7 +2080,7 @@ function updateFocusBtn(){
   b.title=focusOnly?"Showing only Focus — click to show all":"Show only Focus";
 }
 document.getElementById("btnFocus").onclick=()=>{focusOnly=!focusOnly;renderAll()};
-function renderAll(){if(archiveOldDone())save();renderStrip();renderBackupState();updateStorageUI();updateFocusBtn();if(tab==="actions")renderBoard();else renderNotes()}
+function renderAll(){if(archiveOldDone()|applySubjectMerges())save();renderStrip();renderBackupState();updateStorageUI();updateFocusBtn();if(tab==="actions")renderBoard();else renderNotes()}
 
 /* migrate */
 function migrate(){
