@@ -8,7 +8,7 @@
   :root{
     --bg:#F5F6F8; --surface:#FFFFFF; --ink:#1A1D23; --ink-2:#5C6470; --ink-3:#8A93A0;
     --line:#E4E7EC; --line-2:#EFF1F4;
-    --accent:#2F4A6D; --accent-soft:#EDF2F8;
+    --accent:#1F5FBF; --accent-soft:#E6EFFC;
     --amber:#9A5B06; --amber-bg:#FDF6E7; --amber-line:#E8CFA0;
     --red:#A32617; --red-bg:#FCF0EE;
     --r:10px; --r-sm:6px;
@@ -207,22 +207,29 @@
     border:1px solid #D3DFEC;border-radius:20px;padding:3px 6px 3px 11px;font-size:12.5px;font-weight:560}
   .chip button{background:transparent;border:0;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;
     padding:1px 4px;border-radius:50%}
-  .chip button:hover{background:rgba(47,74,109,.14)}
+  .chip button:hover{background:rgba(31,95,191,.14)}
   .chipbar .lnk{margin-left:auto;font-size:12.5px}
   .resultcount{font-size:12.5px;color:var(--ink-3);margin:-4px 0 12px}
 
   /* ----- R5: two-column notes layout ----- */
-  .notecols{display:grid;grid-template-columns:58fr 42fr;gap:22px;align-items:start}
+  /* Stacked layout: "Coming up" = horizontal strip of compact tiles on top (click to grow),
+     "History" = full-width list underneath. */
+  .notecols{display:flex;flex-direction:column;gap:22px}
   .notecol{min-width:0}
-  .notecol-head{position:sticky;top:0;background:var(--bg);z-index:2;font-size:11.5px;font-weight:650;
+  .notecol-head{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:650;
     text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);padding:2px 2px 10px}
-  .notecol-body{max-height:calc(100vh - 150px);overflow-y:auto;padding-right:4px;
-    display:flex;flex-direction:column;gap:10px}
-  @media (max-width:1280px){
-    .notecols{grid-template-columns:1fr}
-    .notecol-history{order:2}
-    .notecol-body{max-height:none;overflow-y:visible}
-  }
+  .notecol-head .cu-ico{font-size:14px;line-height:1;text-transform:none;letter-spacing:0}
+  .notecol-head .cu-count{background:var(--accent);color:#fff;border-radius:10px;padding:0 7px;
+    font-size:11px;font-weight:700;letter-spacing:0;line-height:17px}
+  .notecol-body{display:flex;flex-direction:column;gap:10px}
+  .notecol-coming .notecol-body{flex-direction:row;flex-wrap:wrap;align-items:flex-start}
+  .notecol-coming .notecard:not(.expanded){height:auto;width:250px;flex:0 0 auto;padding-bottom:10px}
+  .notecol-coming .notecard:not(.expanded) .nc-meta,
+  .notecol-coming .notecard:not(.expanded) .nc-counts,
+  .notecol-coming .notecard:not(.expanded) .nc-top2,
+  .notecol-coming .notecard:not(.expanded) .nc-edit{display:none}
+  .notecol-coming .notecard.expanded{flex:1 1 100%}
+  .notecol-coming .empty{padding:2px 2px 6px}
 
   /* ----- R3/R4: note-type + status badges ----- */
   .typebadge{border-radius:5px;padding:1px 7px;font-size:11px;font-weight:620;text-transform:uppercase;
@@ -491,7 +498,7 @@
         <div class="resultcount" id="resultCount" style="display:none"></div>
         <div class="notecols">
           <div class="notecol notecol-coming">
-            <div class="notecol-head">Coming up</div>
+            <div class="notecol-head"><span class="cu-ico" aria-hidden="true">🗓</span>Coming up<span class="cu-count" id="comingCount" style="display:none"></span></div>
             <div class="notecol-body" id="col-coming"></div>
           </div>
           <div class="notecol notecol-history">
@@ -576,7 +583,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const APP_VERSION="1.3.0";
+const APP_VERSION="1.4.0";
 const JIRA_BASE="https://moodysanalytics.atlassian.net/browse/";
 const KEY="meeting-actions-v1", NOTES_KEY="meeting-notes-v1", BACKUP_KEY="meeting-backup-at",
       GROUPS_KEY="meeting-groups-v1", MERGE_KEY="meeting-merges-v1";
@@ -1540,6 +1547,7 @@ function renderNotes(){
   else rc.style.display="none";
 
   const comingBox=document.getElementById("col-coming"), historyBox=document.getElementById("col-history");
+  document.getElementById("comingCount").style.display="none";
   if(!notesState.length){
     comingBox.innerHTML='<div class="zero"><h3>No notes yet</h3>'
       +'<p>Notes arrive with your actions when a meeting is imported from Claude. People and subjects build themselves from there.</p>'
@@ -1560,6 +1568,8 @@ function renderNotes(){
 
   const prep=list.filter(n=>n.status==="prep").sort(comingUpSort);
   const held=list.filter(n=>n.status!=="prep").sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const cc=document.getElementById("comingCount");
+  cc.textContent=prep.length;cc.style.display=prep.length?"":"none";
   comingBox.innerHTML=prep.length?prep.map(n=>noteCard2HTML(n,true,expandedComing)).join("")
     :'<div class="empty">Nothing coming up.</div>';
   historyBox.innerHTML=held.length?held.map(n=>noteCard2HTML(n,false,expandedHistory)).join("")
