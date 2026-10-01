@@ -1447,7 +1447,6 @@ function noteCard2HTML(n,isPrep,expandedId){
   const countsParts=[];
   if(carry.actions.length)countsParts.push(carry.actions.length+" action"+(carry.actions.length>1?"s":"")+" carried over");
   if(carry.questions.length)countsParts.push(carry.questions.length+" question"+(carry.questions.length>1?"s":""));
-  if(notesOnly.length)countsParts.push(notesOnly.length+" note"+(notesOnly.length>1?"s":""));
   const countsLine=countsParts.length?'<div class="nc-counts">'+countsParts.join(" · ")+'</div>':"";
 
   const items=[];
