@@ -286,7 +286,8 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
   .nc-chev{flex:none;font-size:13px;color:var(--ink-2);transition:transform .16s ease;display:inline-block;line-height:1}
   .notecard.expanded .nc-chev{transform:rotate(90deg)}
-  .nc-edit{flex:none}
+  .nc-edit{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:48px;min-height:34px;padding:0 14px}
+  .nc-edit svg{display:block}
   .nc-meta{font-size:12px;color:var(--ink-3);margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .nc-counts{font-size:12px;color:var(--ink-2);margin-top:6px;font-weight:550;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1500,7 +1501,8 @@ function noteCard2HTML(n,isPrep,expandedId){
     +'<span class="nc-title" title="'+esc(n.meeting||"No subject")+'">'+hl(n.meeting||"No subject")+'</span>'
     +(status?'<span class="statusbadge '+status.cls+'" title="'+esc(status.title)+'">'+esc(status.label)+'</span>':"")
     +'<span class="nc-chev" aria-hidden="true">▸</span></button>'
-    +'<button class="btn quiet tiny nc-edit" data-edit-note="'+n.id+'">Edit</button>'
+    +'<button class="btn quiet tiny nc-edit" data-edit-note="'+n.id+'" title="Edit note" aria-label="Edit note">'
+    +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg></button>'
     +'</div>'
     +(meta?'<div class="nc-meta" title="'+esc(meta)+'">'+esc(meta)+'</div>':"")
     +countsLine
