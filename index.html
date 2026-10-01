@@ -1287,6 +1287,29 @@ function applySubjectMerges(){
   if(act.some(s=>!activeSubjects.has(s))||act.length!==activeSubjects.size){activeSubjects=new Set(act);changed=true}
   return changed;
 }
+/* Auto "Synch" category: every subject containing "Synch"/"Sync" (as a word) is filed under one category,
+   and shown there by the person's name only ("Shari - Synch" -> "Shari"). Display-only: the stored
+   subject keeps its full name so prep matching and merges are unaffected. */
+const SYNCH_RE=/\bsynch?\b/i;
+function synchLabel(s){
+  const t=String(s).replace(/\s*[-–—:]?\s*\bsynch?\b\s*[-–—:]?\s*/ig," ").replace(/\s+/g," ").trim();
+  return t||s;
+}
+function syncAutoGroups(){
+  const subs=[...new Set(notesState.map(n=>n.meeting).filter(Boolean))].filter(s=>SYNCH_RE.test(s));
+  let g=groupsState.find(x=>x.auto==="synch"),changed=false;
+  if(!g){
+    if(!subs.length||mergeState.some(m=>m.kind==="seed"&&m.id==="synch-category"))return false;
+    g={id:uid(),name:"Synch",subjects:[],collapsed:false,auto:"synch"};
+    groupsState.push(g);mergeState.push({id:"synch-category",kind:"seed"});changed=true;
+  }
+  subs.forEach(s=>{
+    if((g.subjects||[]).includes(s))return;
+    groupsState.forEach(o=>{if(o!==g&&o.subjects)o.subjects=o.subjects.filter(x=>x!==s)});
+    g.subjects=(g.subjects||[]).concat(s);changed=true;
+  });
+  return changed;
+}
 let subjectSuggestions=[];
 function findSubjectSuggestions(counts){
   const names=Object.keys(counts).filter(s=>s!=="No subject"&&normSubject(s));
@@ -1353,7 +1376,7 @@ function renderSubjectsPanel(){
     const distinct=mine.filter(s=>normLabel(s)!==gNorm);
     const count=groupCount(g,subjects);
     const active=(g.subjects||[]).length>0 && (g.subjects||[]).every(s=>activeSubjects.has(s));
-    if(distinct.length<2){
+    if(distinct.length<2&&g.auto!=="synch"){
       /* fewer than 2 distinct children left after collapsing duplicates: flat row, no expand affordance */
       h+='<div class="grphead droptarget" data-grpdrop="'+g.id+'" aria-pressed="'+active+'" tabindex="0">'
         +'<span style="flex:1">'+esc(g.name)+'</span><span class="n">'+count+'</span>'
@@ -1366,7 +1389,7 @@ function renderSubjectsPanel(){
         +'<span class="n">'+count+'</span>'
         +'<button class="rm" data-grprm="'+g.id+'" aria-label="Remove category" title="Remove category">×</button></div>';
       if(!g.collapsed){
-        h+='<div class="grpkids">'+distinct.map(s=>tileHTML(s,subjects[s],activeSubjects.has(s),"subject",true)).join("")+'</div>';
+        h+='<div class="grpkids">'+distinct.map(s=>tileHTML(s,subjects[s],activeSubjects.has(s),"subject",true,g.auto==="synch"?synchLabel(s):null)).join("")+'</div>';
       }
       h+='</div>';
     }
@@ -1377,9 +1400,9 @@ function renderSubjectsPanel(){
   wireSubjectDnd();
   wireSubjectMerges();
 }
-function tileHTML(n,c,act,kind,drag){
-  return '<button class="tile" aria-pressed="'+act+'"'+(drag?' draggable="true"':'')+' data-'+kind+'="'+esc(n)+'">'
-    +'<span>'+esc(n)+'</span><span class="n">'+c+'</span></button>';
+function tileHTML(n,c,act,kind,drag,label){
+  return '<button class="tile" aria-pressed="'+act+'"'+(drag?' draggable="true"':'')+' data-'+kind+'="'+esc(n)+'"'+(label?' title="'+esc(n)+'"':'')+'>'
+    +'<span>'+esc(label||n)+'</span><span class="n">'+c+'</span></button>';
 }
 function wireSubjectDnd(){
   document.querySelectorAll(".tile[data-subject]").forEach(el=>{
@@ -2080,7 +2103,7 @@ function updateFocusBtn(){
   b.title=focusOnly?"Showing only Focus — click to show all":"Show only Focus";
 }
 document.getElementById("btnFocus").onclick=()=>{focusOnly=!focusOnly;renderAll()};
-function renderAll(){if(archiveOldDone()|applySubjectMerges())save();renderStrip();renderBackupState();updateStorageUI();updateFocusBtn();if(tab==="actions")renderBoard();else renderNotes()}
+function renderAll(){if(archiveOldDone()|applySubjectMerges()|syncAutoGroups())save();renderStrip();renderBackupState();updateStorageUI();updateFocusBtn();if(tab==="actions")renderBoard();else renderNotes()}
 
 /* migrate */
 function migrate(){
