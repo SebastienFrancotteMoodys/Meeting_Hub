@@ -8,6 +8,7 @@ Versioning: `vMAJOR.MINOR.PATCH` — a new feature bumps MINOR, a fix bumps PATC
 - **Auto "Synch" category**: every subject containing the word "Synch" or "Sync" is filed under a "Synch" category in the Subjects panel and shown by the person's name only (e.g. "Shari - Synch" shows as "Shari"). Display-only; the stored subject name is unchanged. New synch meetings join automatically.
 - **Subject entity resolution**: near-duplicate meeting subjects (e.g. "Shari - Synch" / "shari synch" / "Shari - Sync") are suggested at the top of the Subjects panel with Merge / Keep separate. Nothing is merged without your answer; a merge renames matching notes, actions and categories (Undo available) and also applies to future imports.
 ### Changed
+- **Selected filters** (people, subjects, categories) are now highlighted with a light gray background and a thin dark bar instead of a solid blue fill.
 - **Notes layout**: "Coming up" is now a horizontal strip of compact tiles above "History". A calendar icon with a count shows when something is coming; clicking a tile grows it to full width, clicking again collapses it.
 - **History** now takes the full width below, with no inner scroll.
 - **Note cards** no longer show the "N notes" count (carried-over actions and questions counts remain).
